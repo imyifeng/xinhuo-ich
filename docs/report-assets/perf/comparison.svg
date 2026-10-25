@@ -1,0 +1,71 @@
+<!-- 由 docs/report-assets/perf/chart.mjs 从 docs/perf/results/*.summary.json 生成；重生成：node chart.mjs -->
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="740" viewBox="0 0 960 740" font-family="'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif">
+  <rect width="960" height="740" fill="#ffffff"/>
+  <text x="480" y="24" text-anchor="middle" font-size="17" font-weight="700" fill="#0f172a">技艺条目详情接口：开 / 关缓存对比（JMeter，60s，0 错误）</text>
+  <line x1="84" y1="336.0" x2="936" y2="336.0" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="74" y="340.0" text-anchor="end" font-size="12" fill="#475569">0</text>
+  <line x1="84" y1="272.0" x2="936" y2="272.0" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="74" y="276.0" text-anchor="end" font-size="12" fill="#475569">4,457</text>
+  <line x1="84" y1="208.0" x2="936" y2="208.0" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="74" y="212.0" text-anchor="end" font-size="12" fill="#475569">8,915</text>
+  <line x1="84" y1="144.0" x2="936" y2="144.0" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="74" y="148.0" text-anchor="end" font-size="12" fill="#475569">13,372</text>
+  <line x1="84" y1="80.0" x2="936" y2="80.0" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="74" y="84.0" text-anchor="end" font-size="12" fill="#475569">17,829</text>
+  <rect x="164.0" y="301.8" width="56" height="34.2" fill="#64748b" rx="3"/>
+  <text x="192.0" y="295.8" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">2,380</text>
+  <rect x="232.0" y="80.0" width="56" height="256.0" fill="#d97706" rx="3"/>
+  <text x="260.0" y="74.0" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">17,829</text>
+  <text x="226.0" y="356" text-anchor="middle" font-size="13" fill="#334155">50 并发</text>
+  <text x="226.0" y="374" text-anchor="middle" font-size="12" fill="#b45309">7.5×</text>
+  <rect x="448.0" y="305.5" width="56" height="30.5" fill="#64748b" rx="3"/>
+  <text x="476.0" y="299.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">2,126</text>
+  <rect x="516.0" y="127.8" width="56" height="208.2" fill="#d97706" rx="3"/>
+  <text x="544.0" y="121.8" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">14,498</text>
+  <text x="510.0" y="356" text-anchor="middle" font-size="13" fill="#334155">100 并发</text>
+  <text x="510.0" y="374" text-anchor="middle" font-size="12" fill="#b45309">6.8×</text>
+  <rect x="732.0" y="302.9" width="56" height="33.1" fill="#64748b" rx="3"/>
+  <text x="760.0" y="296.9" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">2,305</text>
+  <rect x="800.0" y="105.8" width="56" height="230.2" fill="#d97706" rx="3"/>
+  <text x="828.0" y="99.8" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">16,029</text>
+  <text x="794.0" y="356" text-anchor="middle" font-size="13" fill="#334155">200 并发</text>
+  <text x="794.0" y="374" text-anchor="middle" font-size="12" fill="#b45309">7.0×</text>
+  <text x="84" y="62" font-size="15" font-weight="700" fill="#0f172a">吞吐（越高越好）</text>
+  <text x="936" y="62" text-anchor="end" font-size="12" fill="#64748b">req/s</text>
+  <line x1="84" y1="676.0" x2="936" y2="676.0" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="74" y="680.0" text-anchor="end" font-size="12" fill="#475569">0</text>
+  <line x1="84" y1="612.0" x2="936" y2="612.0" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="74" y="616.0" text-anchor="end" font-size="12" fill="#475569">28</text>
+  <line x1="84" y1="548.0" x2="936" y2="548.0" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="74" y="552.0" text-anchor="end" font-size="12" fill="#475569">57</text>
+  <line x1="84" y1="484.0" x2="936" y2="484.0" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="74" y="488.0" text-anchor="end" font-size="12" fill="#475569">85</text>
+  <line x1="84" y1="420.0" x2="936" y2="420.0" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="74" y="424.0" text-anchor="end" font-size="12" fill="#475569">113</text>
+  <rect x="164.0" y="614.8" width="56" height="61.2" fill="#64748b" rx="3"/>
+  <text x="192.0" y="608.8" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">27</text>
+  <rect x="232.0" y="666.9" width="56" height="9.1" fill="#d97706" rx="3"/>
+  <text x="260.0" y="660.9" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">4</text>
+  <text x="226.0" y="696" text-anchor="middle" font-size="13" fill="#334155">50 并发</text>
+  <text x="226.0" y="714" text-anchor="middle" font-size="12" fill="#b45309">↓ 6.8×</text>
+  <rect x="448.0" y="549.1" width="56" height="126.9" fill="#64748b" rx="3"/>
+  <text x="476.0" y="543.1" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">56</text>
+  <rect x="516.0" y="653.3" width="56" height="22.7" fill="#d97706" rx="3"/>
+  <text x="544.0" y="647.3" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">10</text>
+  <text x="510.0" y="696" text-anchor="middle" font-size="13" fill="#334155">100 并发</text>
+  <text x="510.0" y="714" text-anchor="middle" font-size="12" fill="#b45309">↓ 5.6×</text>
+  <rect x="732.0" y="420.0" width="56" height="256.0" fill="#64748b" rx="3"/>
+  <text x="760.0" y="414.0" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">113</text>
+  <rect x="800.0" y="637.5" width="56" height="38.5" fill="#d97706" rx="3"/>
+  <text x="828.0" y="631.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1e293b">17</text>
+  <text x="794.0" y="696" text-anchor="middle" font-size="13" fill="#334155">200 并发</text>
+  <text x="794.0" y="714" text-anchor="middle" font-size="12" fill="#b45309">↓ 6.6×</text>
+  <text x="84" y="402" font-size="15" font-weight="700" fill="#0f172a">P95 延迟（越低越好，↓ 为关闭缓存的延迟倍数）</text>
+  <text x="936" y="402" text-anchor="end" font-size="12" fill="#64748b">ms</text>
+  <g transform="translate(84,726)">
+    <rect x="0" y="-11" width="12" height="12" fill="#64748b" rx="2"/>
+    <text x="18" y="-1" font-size="12.5" fill="#334155">缓存关（CACHE_ENABLED=false，逐请求回源 PostgreSQL）</text>
+    <rect x="470" y="-11" width="12" height="12" fill="#d97706" rx="2"/>
+    <text x="488" y="-1" font-size="12.5" fill="#334155">缓存开（CACHE_ENABLED=true，Redis cache-aside）</text>
+  </g>
+</svg>
