@@ -183,3 +183,43 @@ export async function createPost(authorId: number, input: unknown): Promise<Post
     createdAt: created.createdAt.toISOString(),
   }
 }
+
+/** 评论校验规则：正文 1~2000 字符（按首尾去空白计） */
+export const COMMENT_CONTENT_MAX_LENGTH = 2000
+
+/** 评论视图：面向详情/接口的公开字段 */
+export type CommentCreated = CommentView
+
+/** 评论帖子（用户故事 9）：帖子须存在且可见；落库后写 CREATE_COMMENT 事件（规格 #1 故事 27 之五） */
+export async function createComment(postId: string, authorId: number, input: unknown): Promise<CommentCreated> {
+  const body = (typeof input === 'object' && input !== null ? input : {}) as Record<string, unknown>
+  const content = normalizedString(body.content)
+  if (!content || content.length > COMMENT_CONTENT_MAX_LENGTH) {
+    throw new AuthError(400, `评论内容需为 1~${COMMENT_CONTENT_MAX_LENGTH} 个字符`)
+  }
+
+  const db = usePrisma()
+  const post = await db.post.findUnique({ where: { id: postId }, select: { id: true, status: true } })
+  if (!post || post.status !== 'VISIBLE') {
+    throw new AuthError(404, '帖子不存在或已下架')
+  }
+
+  const created = await db.comment.create({
+    data: { postId, authorId, content },
+    select: {
+      id: true,
+      content: true,
+      createdAt: true,
+      author: { select: { id: true, displayName: true } },
+    },
+  })
+
+  await recordBehaviorEvent({ userId: authorId, type: 'CREATE_COMMENT', targetType: 'COMMENT', targetId: created.id })
+
+  return {
+    id: created.id,
+    content: created.content,
+    author: { id: created.author.id, displayName: created.author.displayName },
+    createdAt: created.createdAt.toISOString(),
+  }
+}
