@@ -84,15 +84,144 @@ async function seedAdminUser() {
   })
 }
 
+/** 演示学习者账号（工单 #7）：交流区演示帖子/评论的作者，幂等 upsert。仅用于开发/演示。 */
+const SEED_LEARNERS = [
+  { username: 'taotao', displayName: '陶陶学瓷', password: 'taotao123456' },
+  { username: 'shanshan', displayName: '山山织语', password: 'shanshan123456' },
+  { username: 'muzi', displayName: '木子观纸', password: 'muzi123456' },
+] as const
+
+interface SeedComment {
+  author: (typeof SEED_LEARNERS)[number]['username']
+  content: string
+}
+
+interface SeedPost {
+  author: (typeof SEED_LEARNERS)[number]['username']
+  title: string
+  content: string
+  comments: SeedComment[]
+}
+
+/** 演示帖子：围绕制瓷/织绣/造纸的学习心得与提问（工单 #7） */
+const SEED_POSTS: SeedPost[] = [
+  {
+    author: 'taotao',
+    title: '第一次拉坯成功的心得：手要稳，心要慢',
+    content: '跟着平台课程练了三周，今天终于拉出一个像样的碗底。最大的体会是两手一定要有支撑点，肘部架在腿上，泥团居中后再慢慢开孔。失败十几次都是因为急着提筒，泥料水分一失就歪。分享给同样在入门的朋友：别急，先把揉泥练扎实。',
+    comments: [
+      { author: 'shanshan', content: '恭喜！“先揉泥后拉坯”确实是过来人的共识，织绣里理线也是一个道理。' },
+      { author: 'muzi', content: '请问用的哪种泥料？我想找个接近宣纸抄纸手感的练习材料。' },
+    ],
+  },
+  {
+    author: 'taotao',
+    title: '请教：釉面开片是烧制问题还是配方问题？',
+    content: '自己配的石灰釉烧出来全是细密开片，本来想要温润的影青效果。升温曲线是按课程里说的 1280 度还原烧，怀疑是釉浆过筛不够细，或者是冷却太快。有经验的伙伴能指点一下排查顺序吗？',
+    comments: [
+      { author: 'muzi', content: '先查釉浆细度吧，我们造纸筛浆也是同理，颗粒粗了表面就毛糙。' },
+      { author: 'shanshan', content: '帮顶，等一个配方大佬。' },
+    ],
+  },
+  {
+    author: 'shanshan',
+    title: '苏绣入门一个月：劈丝比想象中难',
+    content: '按教程把一根花线劈到十六分之一，手抖得根本挂不住针。后来发现诀窍是指甲要留一点点、指尖保持干燥，劈之前先用掐的手感找到纤维走向。现在能绣出第一片花瓣了，虽然歪歪扭扭，晒图留念（等拍好再传）。',
+    comments: [
+      { author: 'taotao', content: '“指尖保持干燥”这个细节太真实了，拉坯正好相反，手要湿。' },
+      { author: 'muzi', content: '期待晒图！' },
+    ],
+  },
+  {
+    author: 'shanshan',
+    title: '织机经线张力不均，求排查思路',
+    content: '老式木织机，织到中段总是右边松左边紧，布面起皱。检查了综片和卷轴都没发现明显问题。是不是经轴上的经线绕的时候松紧就不一致了？重新整经工作量大，想先听听大家的排查经验。',
+    comments: [
+      { author: 'muzi', content: '我们抄纸的帘子也讲究受力均匀，猜测是整经时张力没有逐根校准，可以试着在边纲处加个小的配重过渡。' },
+    ],
+  },
+  {
+    author: 'muzi',
+    title: '抄纸第一周小结：纸浆浓度是灵魂',
+    content: '跟着课程试了楮皮浆，第一帘抄出来厚得像毛毯，第二帘又薄得透光。师傅说得对：抄纸的手感全在“晃帘”两下，浓度固定之后剩下的就是练习。记录一下配比：楮皮浆对水大约 1:20，日温 24 度时的状态最顺手。',
+    comments: [
+      { author: 'taotao', content: '“晃帘两下”和拉坯的“三提两转”一样，都是口传心授的手感，课程能把它写清楚太不容易了。' },
+      { author: 'shanshan', content: '记下了，周末去工坊试试。' },
+    ],
+  },
+  {
+    author: 'muzi',
+    title: '提问：宣纸传统的日晒雨淋漂白，现在还可行吗？',
+    content: '课程里提到传统漂白是把纸浆摊在山坡上日晒雨淋数月，天然又温和。但我在城里实践条件有限，想请教：有没有小规模的替代方案，既接近传统效果，又不至于用强氧化剂伤纤维？',
+    comments: [
+      { author: 'taotao', content: '不懂造纸，但“阳台山坡”听起来可行，帮蹲一个答案。' },
+    ],
+  },
+  {
+    author: 'taotao',
+    title: '参观湖田窑遗址随想：薪火真的相传',
+    content: '周末去了湖田窑遗址，站在宋代龙窑的窑床前，突然理解了课程里说的“一窑火要守一整夜”。千年前的匣钵还垒在原地，而我们今天在平台上跟着视频学同样的工序，这大概就是这个平台名字的含义吧。',
+    comments: [
+      { author: 'shanshan', content: '有画面感了，下个月计划去镇上看一次开窑。' },
+      { author: 'muzi', content: '“薪火相传”四个字在这里具象化了。' },
+    ],
+  },
+]
+
+/** 交流区演示数据（工单 #7）：学习者幂等 upsert；帖子按标题判重，仅在缺失时创建（含评论）。 */
+async function seedCommunity() {
+  const userIds = new Map<string, number>()
+  for (const learner of SEED_LEARNERS) {
+    const user = await prisma.user.upsert({
+      where: { username: learner.username },
+      create: {
+        username: learner.username,
+        displayName: learner.displayName,
+        passwordHash: await hash(learner.password),
+        role: 'LEARNER',
+      },
+      update: {},
+    })
+    userIds.set(learner.username, user.id)
+  }
+
+  let createdPosts = 0
+  for (const post of SEED_POSTS) {
+    const existing = await prisma.post.findFirst({ where: { title: post.title }, select: { id: true } })
+    if (existing) continue
+    const created = await prisma.post.create({
+      data: {
+        authorId: userIds.get(post.author)!,
+        title: post.title,
+        content: post.content,
+      },
+    })
+    for (const comment of post.comments) {
+      await prisma.comment.create({
+        data: {
+          postId: created.id,
+          authorId: userIds.get(comment.author)!,
+          content: comment.content,
+        },
+      })
+    }
+    createdPosts++
+  }
+  return createdPosts
+}
+
 async function main() {
   await seedCraftItems()
   await seedAdminUser()
-  const [craftItems, tags, inheritors] = await Promise.all([
+  const createdPosts = await seedCommunity()
+  const [craftItems, tags, inheritors, posts, comments] = await Promise.all([
     prisma.craftItem.count(),
     prisma.tag.count(),
     prisma.inheritor.count(),
+    prisma.post.count(),
+    prisma.comment.count(),
   ])
-  console.log(`[seed] 技艺条目 ${craftItems} 条、标签 ${tags} 个、传承人 ${inheritors} 位、演示管理员 admin（幂等 upsert 完成）`)
+  console.log(`[seed] 技艺条目 ${craftItems} 条、标签 ${tags} 个、传承人 ${inheritors} 位、演示管理员 admin；交流区帖子 ${posts} 条（本次新增 ${createdPosts}）、评论 ${comments} 条（幂等完成）`)
 }
 
 main()
