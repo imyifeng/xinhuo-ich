@@ -76,3 +76,61 @@ export async function listPosts(query: { page?: number, pageSize?: number }): Pr
 
   return { items, total, page, pageSize }
 }
+
+export interface CommentView {
+  id: string
+  content: string
+  author: PostAuthorView
+  createdAt: string
+}
+
+export interface PostDetail {
+  id: string
+  title: string
+  content: string
+  author: PostAuthorView
+  /** 可见评论（下架评论不出现在详情中），按创建时间正序 */
+  comments: CommentView[]
+  createdAt: string
+}
+
+/** 帖子详情（公开）：不存在或已下架返回 null（由接入层转 404） */
+export async function getPostDetail(id: string): Promise<PostDetail | null> {
+  const db = usePrisma()
+  const row = await db.post.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      status: true,
+      createdAt: true,
+      author: { select: { id: true, displayName: true } },
+      comments: {
+        where: { status: 'VISIBLE' },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          author: { select: { id: true, displayName: true } },
+        },
+      },
+    },
+  })
+  if (!row || row.status !== 'VISIBLE') return null
+
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    author: { id: row.author.id, displayName: row.author.displayName },
+    comments: row.comments.map(comment => ({
+      id: comment.id,
+      content: comment.content,
+      author: { id: comment.author.id, displayName: comment.author.displayName },
+      createdAt: comment.createdAt.toISOString(),
+    })),
+    createdAt: row.createdAt.toISOString(),
+  }
+}
