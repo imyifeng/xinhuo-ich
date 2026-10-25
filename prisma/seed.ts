@@ -1,30 +1,78 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../server/generated/prisma/client'
 import './load-env'
+import { SEED_CRAFT_ITEMS } from './seed-data'
 
-// 种子数据：仅用于 T1 首页计数演示的最小数据集（均为国家级名录真实条目）。
-// 完整名录种子（20~30 项，含批次/编号）由后续工单补全。
+// 种子脚本：幂等（按名称 upsert），可重复执行。
+// 技艺条目按 name upsert；标签按 name upsert；传承人按（条目, 姓名）upsert。
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 })
 
-const craftItems = [
-  { name: '景德镇手工制瓷技艺', category: '陶瓷', region: '江西省' },
-  { name: '宜兴紫砂陶制作技艺', category: '陶瓷', region: '江苏省' },
-  { name: '龙泉青瓷烧制技艺', category: '陶瓷', region: '浙江省' },
-  { name: '南京云锦织造技艺', category: '织绣', region: '江苏省' },
-  { name: '成都漆艺', category: '漆器', region: '四川省' },
-  { name: '宣纸制作技艺', category: '造纸印刷', region: '安徽省' },
-]
+async function seedCraftItems() {
+  for (const item of SEED_CRAFT_ITEMS) {
+    const craftItem = await prisma.craftItem.upsert({
+      where: { name: item.name },
+      create: {
+        name: item.name,
+        subcategory: item.subcategory,
+        batch: item.batch,
+        code: item.code,
+        region: item.region,
+        history: item.history,
+        features: item.features,
+        images: item.images,
+        videoUrl: item.videoUrl,
+        status: 'PUBLISHED',
+      },
+      update: {
+        subcategory: item.subcategory,
+        batch: item.batch,
+        code: item.code,
+        region: item.region,
+        history: item.history,
+        features: item.features,
+        images: item.images,
+        videoUrl: item.videoUrl,
+      },
+    })
+
+    for (const tag of item.tags) {
+      const row = await prisma.tag.upsert({ where: { name: tag }, create: { name: tag }, update: {} })
+      await prisma.craftItemTag.upsert({
+        where: { craftItemId_tagId: { craftItemId: craftItem.id, tagId: row.id } },
+        create: { craftItemId: craftItem.id, tagId: row.id },
+        update: {},
+      })
+    }
+
+    for (const inheritor of item.inheritors) {
+      await prisma.inheritor.upsert({
+        where: { craftItemId_name: { craftItemId: craftItem.id, name: inheritor.name } },
+        create: {
+          name: inheritor.name,
+          level: inheritor.level,
+          bio: inheritor.bio,
+          craftItemId: craftItem.id,
+        },
+        update: {
+          level: inheritor.level,
+          bio: inheritor.bio,
+        },
+      })
+    }
+  }
+}
 
 async function main() {
-  const result = await prisma.craftItem.createMany({
-    data: craftItems,
-    skipDuplicates: true,
-  })
-  const total = await prisma.craftItem.count()
-  console.log(`[seed] 新增技艺条目 ${result.count} 条，当前共 ${total} 条`)
+  await seedCraftItems()
+  const [craftItems, tags, inheritors] = await Promise.all([
+    prisma.craftItem.count(),
+    prisma.tag.count(),
+    prisma.inheritor.count(),
+  ])
+  console.log(`[seed] 技艺条目 ${craftItems} 条、标签 ${tags} 个、传承人 ${inheritors} 位（幂等 upsert 完成）`)
 }
 
 main()
