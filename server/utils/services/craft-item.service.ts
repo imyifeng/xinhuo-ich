@@ -151,6 +151,14 @@ export async function invalidateCraftItem(id: string): Promise<void> {
   }
 }
 
+/** 批量失效（间接变更用）：管理端改标签/传承人等会影响多个条目的详情内容，
+ *  对受影响条目逐个失效；逐键容错，单键失败不影响其余键 */
+export async function invalidateCraftItems(ids: readonly string[]): Promise<void> {
+  for (const id of new Set(ids)) {
+    await invalidateCraftItem(id)
+  }
+}
+
 export interface CraftItemDetailResult {
   detail: CraftItemDetail | null
   /** 缓存路径结果，供接入层设置 X-Cache 响应头（HIT | MISS | BYPASS） */

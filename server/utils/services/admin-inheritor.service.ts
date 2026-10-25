@@ -1,10 +1,13 @@
 import type { Prisma } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
 import { AdminError, isRecordNotFound, isUniqueViolation } from './admin-error'
+import { invalidateCraftItem } from './craft-item.service'
 
 /**
  * 传承人管理业务层（工单 #5 / 用户故事 21）：
  * 传承人作为展示人物实体挂在技艺条目下（同条目内姓名唯一），管理员完整增删改查。
+ * 缓存接线（工单 #9 / 规格偏差 3）：传承人信息展示在所属条目详情中，
+ * 创建/更新/删除后失效对应条目的详情缓存；改挂条目时新旧条目都失效。
  */
 
 export interface AdminInheritorListQuery {
@@ -85,7 +88,7 @@ export async function listAdminInheritors(
   }
 }
 
-/** 创建传承人：所属条目不存在 400，同条目重名 409 */
+/** 创建传承人：所属条目不存在 400，同条目重名 409；成功后失效所属条目详情缓存 */
 export async function createAdminInheritor(input: unknown): Promise<AdminInheritorView> {
   const data = parseWriteInput(input)
   await assertCraftItemExists(data.craftItemId)
@@ -95,6 +98,7 @@ export async function createAdminInheritor(input: unknown): Promise<AdminInherit
       data,
       include: { craftItem: { select: { name: true } } },
     })
+    await invalidateCraftItem(row.craftItemId)
     return toView(row)
   }
   catch (error) {
@@ -103,17 +107,26 @@ export async function createAdminInheritor(input: unknown): Promise<AdminInherit
   }
 }
 
-/** 更新传承人（可改挂条目）：不存在 404，所属条目不存在 400，同条目重名 409 */
+/** 更新传承人（可改挂条目）：不存在 404，所属条目不存在 400，同条目重名 409；
+ *  成功后失效新旧所属条目的详情缓存（旧条目失去该传承人，新条目新增） */
 export async function updateAdminInheritor(id: string, input: unknown): Promise<AdminInheritorView> {
   const data = parseWriteInput(input)
   await assertCraftItemExists(data.craftItemId)
   const db = usePrisma()
+  const previous = await db.inheritor.findUnique({
+    where: { id },
+    select: { craftItemId: true },
+  })
   try {
     const row = await db.inheritor.update({
       where: { id },
       data,
       include: { craftItem: { select: { name: true } } },
     })
+    await invalidateCraftItem(row.craftItemId)
+    if (previous && previous.craftItemId !== row.craftItemId) {
+      await invalidateCraftItem(previous.craftItemId)
+    }
     return toView(row)
   }
   catch (error) {
@@ -123,14 +136,22 @@ export async function updateAdminInheritor(id: string, input: unknown): Promise<
   }
 }
 
-/** 删除传承人：不存在 404 */
+/** 删除传承人：不存在 404；成功后失效所属条目详情缓存（详情不再展示该传承人） */
 export async function deleteAdminInheritor(id: string): Promise<void> {
+  const db = usePrisma()
+  const previous = await db.inheritor.findUnique({
+    where: { id },
+    select: { craftItemId: true },
+  })
   try {
-    await usePrisma().inheritor.delete({ where: { id } })
+    await db.inheritor.delete({ where: { id } })
   }
   catch (error) {
     if (isRecordNotFound(error)) throw new AdminError(404, '传承人不存在')
     throw error
+  }
+  if (previous) {
+    await invalidateCraftItem(previous.craftItemId)
   }
 }
 

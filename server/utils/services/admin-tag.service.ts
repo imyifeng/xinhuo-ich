@@ -1,10 +1,13 @@
 import type { Prisma } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
 import { AdminError, isRecordNotFound, isUniqueViolation } from './admin-error'
+import { invalidateCraftItems } from './craft-item.service'
 
 /**
  * 标签管理业务层（工单 #5 / 用户故事 20）：
  * 标签是推荐算法的数据源；删除时条目关联由外键级联解除。
+ * 缓存接线（工单 #9 / 规格偏差 3）：标签名出现在条目详情中，
+ * 重命名与删除后对关联条目逐个失效详情缓存。
  */
 
 export interface AdminTagListQuery {
@@ -62,15 +65,19 @@ export async function createAdminTag(input: unknown): Promise<AdminTagView> {
   }
 }
 
-/** 重命名标签：不存在 404，重名 409 */
+/** 重命名标签：不存在 404，重名 409；成功后失效关联条目的详情缓存（详情含标签名） */
 export async function updateAdminTag(id: string, input: unknown): Promise<AdminTagView> {
   const data = parseWriteInput(input)
   try {
     const row = await usePrisma().tag.update({
       where: { id },
       data,
-      include: { _count: { select: { items: true } } },
+      include: {
+        _count: { select: { items: true } },
+        items: { select: { craftItemId: true } },
+      },
     })
+    await invalidateCraftItems(row.items.map(item => item.craftItemId))
     return toView(row)
   }
   catch (error) {
@@ -80,8 +87,14 @@ export async function updateAdminTag(id: string, input: unknown): Promise<AdminT
   }
 }
 
-/** 删除标签：与条目的关联由外键级联解除（craft_item_tag.onDelete: Cascade）；不存在 404 */
+/** 删除标签：与条目的关联由外键级联解除（craft_item_tag.onDelete: Cascade）；不存在 404；
+ *  关联条目的详情缓存一并失效（否则缓存的详情仍展示已删除的标签名） */
 export async function deleteAdminTag(id: string): Promise<void> {
+  const linkedItemIds = (await usePrisma().craftItemTag.findMany({
+    where: { tagId: id },
+    select: { craftItemId: true },
+  })).map(link => link.craftItemId)
+
   try {
     await usePrisma().tag.delete({ where: { id } })
   }
@@ -89,4 +102,5 @@ export async function deleteAdminTag(id: string): Promise<void> {
     if (isRecordNotFound(error)) throw new AdminError(404, '标签不存在')
     throw error
   }
+  await invalidateCraftItems(linkedItemIds)
 }
