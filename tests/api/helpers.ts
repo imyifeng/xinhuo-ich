@@ -31,14 +31,64 @@ export async function attachTags(prisma: PrismaClient, craftItemId: string, tagN
   }
 }
 
-/** 清空条目相关表（级联含传承人/条目标签） */
+/** 清空条目相关表（级联含传承人/条目标签）与课程相关表 */
 export async function resetCraftItemTables(prisma: PrismaClient) {
+  await resetCourseTables(prisma)
   await prisma.behaviorEvent.deleteMany()
   await prisma.user.deleteMany()
   await prisma.craftItemTag.deleteMany()
   await prisma.tag.deleteMany()
   await prisma.inheritor.deleteMany()
   await prisma.craftItem.deleteMany()
+}
+
+/** 清空课程相关表（学习记录/步骤/课程） */
+export async function resetCourseTables(prisma: PrismaClient) {
+  await prisma.learningRecord.deleteMany()
+  await prisma.step.deleteMany()
+  await prisma.course.deleteMany()
+}
+
+/** 课程夹具：craftItemId 与 authorId 必须由调用方先备好（条目与用户） */
+export async function createCourse(
+  prisma: PrismaClient,
+  overrides: Partial<{
+    title: string
+    intro: string
+    craftItemId: string
+    authorId: number
+    status: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED'
+    rejectReason: string | null
+  }> = {},
+) {
+  return prisma.course.create({
+    data: {
+      title: overrides.title ?? `测试课程-${Math.random().toString(36).slice(2)}`,
+      intro: overrides.intro ?? '课程简介',
+      craftItemId: overrides.craftItemId!,
+      authorId: overrides.authorId!,
+      status: overrides.status ?? 'DRAFT',
+      rejectReason: overrides.rejectReason ?? null,
+    },
+  })
+}
+
+/** 步骤夹具：默认内容足够通过校验 */
+export async function createStep(
+  prisma: PrismaClient,
+  courseId: string,
+  order: number,
+  overrides: Partial<{ title: string, content: string, imageUrl: string | null }> = {},
+) {
+  return prisma.step.create({
+    data: {
+      courseId,
+      order,
+      title: overrides.title ?? `第 ${order} 步`,
+      content: overrides.content ?? `第 ${order} 步的内容`,
+      imageUrl: overrides.imageUrl ?? null,
+    },
+  })
 }
 
 // ---- 会话夹具：与 server/utils/session.ts 的共享契约一致（勿改格式） ----
