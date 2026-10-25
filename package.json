@@ -1,0 +1,45 @@
+{
+  "name": "xinhuo-ich",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=26.12.1"
+  },
+  "packageManager": "pnpm@12.15.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
+  },
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "prisma generate && nuxt prepare",
+    "test": "vitest run",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "ioredis": "6.0.0",
+    "nuxt": "4.6.2",
+    "prisma": "7.10.1",
+    "vue": "3.5.44",
+    "vue-router": "5.4.0"
+  },
+  "devDependencies": {
+    "@nuxt/test-utils": "4.3.4",
+    "@tailwindcss/vite": "4.3.3",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  }
+}
