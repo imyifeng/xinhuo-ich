@@ -15,6 +15,10 @@ interface StudioCourse {
   craftItemId: string
   craftItemName: string
   stepCount: number
+  /** 详情页累计浏览量（用户故事 18） */
+  viewCount: number
+  /** 学习人数（START_COURSE 去重用户数，用户故事 18） */
+  learnerCount: number
   rejectReason: string | null
   updatedAt: string
 }
@@ -164,6 +168,17 @@ onMounted(loadCourses)
             <span class="ml-auto text-xs text-stone-400">{{ course.craftItemName }} · {{ course.stepCount }} 个步骤</span>
           </div>
           <p class="mt-2 line-clamp-2 text-sm text-stone-500">{{ course.intro }}</p>
+          <!-- 传播效果两指标（用户故事 18）：浏览量 / 学习人数 -->
+          <div class="mt-3 flex items-center gap-4 text-xs text-stone-500">
+            <span class="inline-flex items-center gap-1">
+              <span class="text-stone-400">浏览量</span>
+              <span class="font-medium text-stone-700">{{ course.viewCount }}</span>
+            </span>
+            <span class="inline-flex items-center gap-1">
+              <span class="text-stone-400">学习人数</span>
+              <span class="font-medium text-stone-700">{{ course.learnerCount }}</span>
+            </span>
+          </div>
           <p v-if="course.status === 'REJECTED' && course.rejectReason" class="mt-2 text-sm text-red-600">
             驳回理由：{{ course.rejectReason }}
           </p>

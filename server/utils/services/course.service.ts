@@ -1,5 +1,6 @@
 import type { CourseStatus, Prisma, Role } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
+import { COURSE_TARGET_TYPE } from './behavior-event.service'
 import { isRecordNotFound } from './admin-error'
 
 /**
@@ -105,7 +106,8 @@ export interface CourseStepView {
   imageUrl: string | null
 }
 
-export interface StudioCourseSummary {
+/** 创作端课程视图公共字段（列表与详情共享） */
+export interface StudioCourseBase {
   id: string
   title: string
   intro: string
@@ -118,7 +120,15 @@ export interface StudioCourseSummary {
   updatedAt: string
 }
 
-export interface StudioCourseDetail extends StudioCourseSummary {
+/** 创作端列表行：公共字段 + 传播效果两指标（用户故事 18） */
+export interface StudioCourseSummary extends StudioCourseBase {
+  /** 详情页累计浏览量（GET 详情自增，游客也计） */
+  viewCount: number
+  /** 学习人数：该课程 START_COURSE 事件去重用户数 */
+  learnerCount: number
+}
+
+export interface StudioCourseDetail extends StudioCourseBase {
   steps: CourseStepView[]
 }
 
@@ -211,9 +221,11 @@ export async function createStudioCourse(authorId: number, input: unknown): Prom
   return toStudioDetail(row)
 }
 
-/** 创作端课程列表：仅本人（管理员传 actorRole=ADMIN 时也按作者过滤，无全量列表需求） */
+/** 创作端课程列表：仅本人（管理员传 actorRole=ADMIN 时也按作者过滤，无全量列表需求）；
+ *  附带传播效果两指标（用户故事 18）：浏览量（view_count 列）与学习人数（START_COURSE 去重用户数） */
 export async function listStudioCourses(authorId: number): Promise<{ items: StudioCourseSummary[] }> {
-  const rows = await usePrisma().course.findMany({
+  const db = usePrisma()
+  const rows = await db.course.findMany({
     where: { authorId },
     include: {
       craftItem: { select: { name: true } },
@@ -221,6 +233,21 @@ export async function listStudioCourses(authorId: number): Promise<{ items: Stud
     },
     orderBy: [{ updatedAt: 'desc' as const }, { id: 'asc' as const }],
   })
+
+  // 学习人数批量统计：行为事件是现成数据源（不加新表）；(targetId, userId) 去重，脏重复不放大计数
+  const courseIds = rows.map(row => row.id)
+  const starts = courseIds.length === 0
+    ? []
+    : await db.behaviorEvent.findMany({
+        where: { type: 'START_COURSE', targetType: COURSE_TARGET_TYPE, targetId: { in: courseIds } },
+        distinct: ['targetId', 'userId'],
+        select: { targetId: true },
+      })
+  const learnerCounts = new Map<string, number>()
+  for (const start of starts) {
+    learnerCounts.set(start.targetId, (learnerCounts.get(start.targetId) ?? 0) + 1)
+  }
+
   return {
     items: rows.map(row => ({
       id: row.id,
@@ -230,6 +257,8 @@ export async function listStudioCourses(authorId: number): Promise<{ items: Stud
       craftItemId: row.craftItemId,
       craftItemName: row.craftItem.name,
       stepCount: row._count.steps,
+      viewCount: row.viewCount,
+      learnerCount: learnerCounts.get(row.id) ?? 0,
       rejectReason: row.rejectReason,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
@@ -485,6 +514,15 @@ export async function getPublishedCourseDetail(courseId: string, viewerUserId?: 
     },
   })
   if (!row || row.status !== 'PUBLISHED') return null
+
+  // 浏览计数（用户故事 18）：详情成功返回即原子自增，游客也计；
+  // 计数失败不阻断详情返回（与缓存失效同策略，仅记日志）
+  try {
+    await usePrisma().course.update({ where: { id: row.id }, data: { viewCount: { increment: 1 } } })
+  }
+  catch (err) {
+    console.error('[course] 浏览计数自增失败', row.id, err instanceof Error ? err.message : err)
+  }
 
   const completedSteps = loggedIn ? row.steps.filter(s => s.learningRecords.length > 0).length : 0
   return {

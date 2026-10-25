@@ -1,5 +1,5 @@
 import { usePrisma } from '../prisma'
-import { recordBehaviorEvent } from './behavior-event.service'
+import { COURSE_TARGET_TYPE, recordBehaviorEvent } from './behavior-event.service'
 import { CourseError, type CourseProgress } from './course.service'
 
 /**
@@ -7,9 +7,6 @@ import { CourseError, type CourseProgress } from './course.service'
  * 开始课程与标记完成分别写 START_COURSE / COMPLETE_STEP 行为事件；
  * 学习进度落在 learning_record（userId + stepId 联合主键，天然幂等）。
  */
-
-/** 事件多态目标：两类课程事件都以课程为目标，画像按课程聚合完成度（规格 #1） */
-const COURSE_TARGET_TYPE = 'COURSE'
 
 /** 确认课程已发布（对学习者可见），否则 404（不区分不存在与未发布，与条目详情一致） */
 async function requirePublishedCourse(courseId: string): Promise<{ id: string }> {

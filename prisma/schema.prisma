@@ -183,6 +183,8 @@ model Course {
   craftItemId String @map("craft_item_id")
   /// 作者（传承人账号，管理员代建时为其本人）
   authorId Int @map("author_id")
+  /// 详情页累计浏览量（GET 详情原子自增，游客也计；用户故事 18）
+  viewCount Int @default(0) @map("view_count")
   status CourseStatus @default(DRAFT)
   /// 驳回理由（管理员驳回时可附，传承人可见；重新提交时清空）
   rejectReason String? @map("reject_reason")

@@ -1,6 +1,9 @@
 import type { BehaviorEventType } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
 
+/** 课程类行为事件（START_COURSE / COMPLETE_STEP）的多态目标类型：写入与统计共用，防漂移 */
+export const COURSE_TARGET_TYPE = 'COURSE'
+
 export interface BehaviorEventInput {
   userId: number
   type: BehaviorEventType
