@@ -65,7 +65,7 @@ export async function createComment(
   prisma: PrismaClient,
   postId: string,
   authorId: number,
-  overrides: Partial<{ content: string, status: 'VISIBLE' | 'HIDDEN' }> = {},
+  overrides: Partial<{ content: string, status: 'VISIBLE' | 'HIDDEN', createdAt: Date }> = {},
 ) {
   return prisma.comment.create({
     data: {
@@ -73,16 +73,16 @@ export async function createComment(
       authorId,
       content: overrides.content ?? '测试评论',
       status: overrides.status ?? 'VISIBLE',
+      ...(overrides.createdAt ? { createdAt: overrides.createdAt } : {}),
     },
   })
 }
 
-/** 清空交流区相关表（评论级联于帖子；事件与用户一并清空） */
+/** 清空交流区相关表（评论级联于帖子；事件一并清空；用户保留以免夹具会话失效） */
 export async function resetPostTables(prisma: PrismaClient) {
   await prisma.behaviorEvent.deleteMany()
   await prisma.comment.deleteMany()
   await prisma.post.deleteMany()
-  await prisma.user.deleteMany()
 }
 
 // ---- 会话夹具：与 server/utils/session.ts 的共享契约一致（勿改格式） ----
