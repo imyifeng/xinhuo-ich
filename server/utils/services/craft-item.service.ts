@@ -103,3 +103,58 @@ export function asImageList(value: Prisma.JsonValue | null): Array<{ url: string
     typeof entry === 'object' && entry !== null && typeof (entry as { url?: unknown }).url === 'string',
   )
 }
+
+export interface InheritorView {
+  id: string
+  name: string
+  level: string
+  bio: string
+}
+
+export interface CraftItemDetail {
+  id: string
+  name: string
+  subcategory: string
+  batch: string
+  code: string
+  region: string
+  history: string
+  features: string
+  images: Array<{ url: string, credit: string }>
+  videoUrl: string | null
+  tags: string[]
+  inheritors: InheritorView[]
+}
+
+/** 技艺条目详情：不存在或未发布返回 null（由接入层转 404） */
+export async function getCraftItemDetail(id: string): Promise<CraftItemDetail | null> {
+  const db = usePrisma()
+  const row = await db.craftItem.findUnique({
+    where: { id },
+    include: {
+      tags: { orderBy: { tag: { name: 'asc' as const } }, select: { tag: { select: { name: true } } } },
+      inheritors: { orderBy: [{ level: 'asc' as const }, { name: 'asc' as const }] },
+    },
+  })
+  if (!row || row.status !== 'PUBLISHED') return null
+
+  return {
+    id: row.id,
+    name: row.name,
+    subcategory: row.subcategory,
+    batch: row.batch,
+    code: row.code,
+    region: row.region,
+    history: row.history,
+    features: row.features,
+    images: asImageList(row.images),
+    videoUrl: row.videoUrl,
+    tags: row.tags.map(t => t.tag.name),
+    inheritors: row.inheritors.map(inheritor => ({
+      id: inheritor.id,
+      name: inheritor.name,
+      level: inheritor.level,
+      bio: inheritor.bio,
+    })),
+  }
+}
