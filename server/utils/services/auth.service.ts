@@ -1,4 +1,4 @@
-import { hash } from '@node-rs/argon2'
+import { hash, verify } from '@node-rs/argon2'
 import type { Role, User } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
 
@@ -90,4 +90,33 @@ export async function registerUser(input: RegisterInput): Promise<PublicUser> {
     }
     throw error
   }
+}
+
+/** 用户名不存在时的占位校验哈希：抹平"用户名不存在"与"密码错误"的响应耗时差 */
+let dummyHash: Promise<string> | undefined
+
+export interface LoginInput {
+  username: unknown
+  password: unknown
+}
+
+/** 登录：argon2 校验密码；用户名不存在与密码错误统一 401，不泄漏账号存在性 */
+export async function authenticateUser(input: LoginInput): Promise<PublicUser> {
+  const { username, password } = input
+  if (!isNonEmptyString(username) || !isNonEmptyString(password)) {
+    throw new AuthError(401, '用户名或密码错误')
+  }
+
+  const user = await usePrisma().user.findUnique({ where: { username } })
+  if (!user) {
+    dummyHash ??= hash('xinhuo-timing-equalizer-dummy-password')
+    await verify(await dummyHash, password).catch(() => false)
+    throw new AuthError(401, '用户名或密码错误')
+  }
+
+  const valid = await verify(user.passwordHash, password).catch(() => false)
+  if (!valid) {
+    throw new AuthError(401, '用户名或密码错误')
+  }
+  return toPublicUser(user)
 }
