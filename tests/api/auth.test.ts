@@ -189,4 +189,74 @@ describe('认证竖切 /api/auth', async () => {
       expect(res.status).toBe(401)
     })
   })
+
+  describe('GET /api/auth/me 与 POST /api/auth/logout（全流程）', () => {
+    /** 走真实接口注册并登录，返回登录会话 Cookie（"xinhuo_session=token"） */
+    async function registerAndLogin(username: string): Promise<string> {
+      const register = await apiFetch('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ username, password: 'flow-pass-123', displayName: '全流程' }),
+        headers: { 'content-type': 'application/json' },
+      })
+      expect(register.status).toBe(201)
+      const login = await apiFetch('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ username, password: 'flow-pass-123' }),
+        headers: { 'content-type': 'application/json' },
+      })
+      expect(login.status).toBe(200)
+      return sessionCookieOf(login)!.split(';')[0]
+    }
+
+    it('未登录访问 me 返回 401', async () => {
+      const res = await apiFetch('/api/auth/me')
+      expect(res.status).toBe(401)
+    })
+
+    it('携带伪造/未知 token 的 Cookie 访问 me 返回 401', async () => {
+      const res = await apiFetch('/api/auth/me', {
+        headers: { cookie: `${SESSION_COOKIE}=totally-fake-token` },
+      })
+      expect(res.status).toBe(401)
+    })
+
+    it('注册 → 登录 → 我的信息 → 登出 → 原 Cookie 再访 me 401（验收主链路）', async () => {
+      const cookie = await registerAndLogin('flow_user')
+
+      const me = await apiFetch('/api/auth/me', { headers: { cookie } })
+      expect(me.status).toBe(200)
+      const meBody = await me.json()
+      expect(meBody).toMatchObject({
+        username: 'flow_user',
+        displayName: '全流程',
+        role: 'LEARNER',
+      })
+      expect((meBody as { passwordHash?: string }).passwordHash).toBeUndefined()
+
+      const logout = await apiFetch('/api/auth/logout', { method: 'POST', headers: { cookie } })
+      expect(logout.status).toBe(200)
+      // 登出响应清除 Cookie（契约：同名 Cookie 置空并要求浏览器立即过期）
+      const cleared = sessionCookieOf(logout)!
+      expect(cleared).toMatch(/^xinhuo_session=;/)
+      expect(cleared).toMatch(/Max-Age=0|Expires=Thu, 01 Jan 1970/i)
+
+      const meAfterLogout = await apiFetch('/api/auth/me', { headers: { cookie } })
+      expect(meAfterLogout.status).toBe(401)
+    })
+
+    it('登出即销毁 Redis 会话键（契约：session:<token> 立即删除）', async () => {
+      const cookie = await registerAndLogin('flow_user_redis')
+      const token = cookie.split('=')[1]
+      const redis = useRedis()
+      expect(await redis.get(`session:${token}`)).toBeTruthy()
+
+      await apiFetch('/api/auth/logout', { method: 'POST', headers: { cookie } })
+      expect(await redis.get(`session:${token}`)).toBeNull()
+    })
+
+    it('未登录登出幂等返回 200', async () => {
+      const res = await apiFetch('/api/auth/logout', { method: 'POST' })
+      expect(res.status).toBe(200)
+    })
+  })
 })

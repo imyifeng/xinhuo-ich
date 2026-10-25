@@ -120,3 +120,9 @@ export async function authenticateUser(input: LoginInput): Promise<PublicUser> {
   }
   return toPublicUser(user)
 }
+
+/** 按会话中的 userId 取当前用户；用户已被删除返回 null（调用方决定 401） */
+export async function getUserById(id: number): Promise<PublicUser | null> {
+  const user = await usePrisma().user.findUnique({ where: { id } })
+  return user ? toPublicUser(user) : null
+}
