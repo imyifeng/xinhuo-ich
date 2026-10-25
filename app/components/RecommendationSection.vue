@@ -29,10 +29,10 @@ const linkOf = (entry: FeedEntry) =>
 <template>
   <section v-if="feed && feed.entries.length">
     <div class="flex flex-wrap items-baseline gap-2">
-      <h2 class="text-lg font-semibold">为你推荐</h2>
+      <h2 class="font-display text-2xl font-bold tracking-wide">为你推荐</h2>
       <span
         v-if="feed.clusterLabel"
-        class="rounded-full bg-orange-50 px-2.5 py-0.5 text-xs text-orange-700"
+        class="rounded-full bg-orange-600/10 px-2.5 py-0.5 text-xs text-orange-700"
       >
         你的画像：{{ feed.clusterLabel }}
       </span>

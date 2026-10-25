@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+/* 前台视觉语言（工单 #10）：
+ * - 主色橙（薪火）× 底色暖石灰（宣纸），全局由 Tailwind 默认色板承担，不另起色值
+ * - 中文标题用衬线字体栈（font-display 工具类）营造「典籍感」，正文保持无衬线保证屏显可读性；
+ *   字体缺失时逐级回退到系统衬线，不引入网络字体（离线/弱网可演示）
+ */
+@theme {
+  --font-display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", ui-serif, serif;
+}
