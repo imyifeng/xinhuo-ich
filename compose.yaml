@@ -1,0 +1,58 @@
+# 生产形态：app（多阶段构建镜像）+ postgres + redis —— 见 ADR 0002
+# 反向代理不在 compose 内：由宿主机既有 Caddy 指向 ${APP_PORT}
+# 用法：docker compose up -d --build
+name: xinhuo-prod
+
+services:
+  app:
+    build: .
+    image: xinhuo-ich:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-xinhuo}:${POSTGRES_PASSWORD:-xinhuo}@postgres:5432/${POSTGRES_DB:-xinhuo}
+      REDIS_URL: redis://redis:6379
+      HOST: 0.0.0.0
+      PORT: 3000
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  postgres:
+    image: postgres:18.2-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-xinhuo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-xinhuo}
+      POSTGRES_DB: ${POSTGRES_DB:-xinhuo}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-xinhuo} -d ${POSTGRES_DB:-xinhuo}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:8.4-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,36 @@
+# 版本控制与协作文件
+.git
+.github
+.agents
+docs
+GLOSSARY.md
+LICENSE
+AGENTS.md
+README.md
+
+# 依赖与构建产物（镜像内重新安装/生成）
+node_modules
+.nuxt
+.output
+.nitro
+.data
+.cache
+coverage
+server/generated
+
+# 环境变量（容器运行时由 compose 注入）
+.env
+.env.*
+!.env.example
+
+# 本地开发与测试
+tests
+vitest.config.ts
+logs
+*.log
+
+# compose 与 docker 自身
+compose.dev.yaml
+compose.yaml
+Dockerfile
+.dockerignore
