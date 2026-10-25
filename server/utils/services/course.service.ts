@@ -353,6 +353,25 @@ export async function deleteCourseStep(
 }
 
 /**
+ * 提交审核：DRAFT/REJECTED → PENDING_REVIEW，需至少一个步骤，旧驳回理由被清空。
+ * 待审核/已发布课程重复提交 409。
+ */
+export async function submitStudioCourse(actorId: number, actorRole: Role, courseId: string): Promise<StudioCourseDetail> {
+  const row = await getCourseForActor(actorId, actorRole, courseId)
+  if (row.status !== 'DRAFT' && row.status !== 'REJECTED') {
+    throw new CourseError(409, '当前状态不可提交（仅草稿或已驳回可提交）')
+  }
+  if (row._count.steps === 0) {
+    throw new CourseError(400, '请先添加至少一个步骤再提交审核')
+  }
+  await usePrisma().course.update({
+    where: { id: courseId },
+    data: { status: 'PENDING_REVIEW', rejectReason: null },
+  })
+  return loadCourseDetail(courseId)
+}
+
+/**
  * 重排步骤：入参为该课程全部步骤 ID 的目标顺序（全量语义，缺一/多一/重复均 400）。
  * 两阶段写入避开 (courseId, order) 唯一约束：先整体挪到负数区，再落最终序号。
  */
