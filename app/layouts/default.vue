@@ -1,18 +1,7 @@
 <template>
   <div class="flex min-h-screen flex-col">
-    <header class="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur">
-      <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <NuxtLink to="/" class="flex items-baseline gap-2">
-          <span class="text-xl font-bold tracking-wide">薪火</span>
-          <span class="text-sm text-stone-400">Xinhuo · ICH</span>
-        </NuxtLink>
-        <nav class="flex items-center gap-6 text-sm">
-          <NuxtLink to="/" class="text-stone-600 transition hover:text-orange-600">首页</NuxtLink>
-          <NuxtLink to="/craft-items" class="text-stone-600 transition hover:text-orange-600">技艺条目</NuxtLink>
-          <!-- auth-area -->
-        </nav>
-      </div>
-    </header>
+    <!-- 认证区块（登录态/登出）在 AppHeader 内，auth-area 锚点亦在其模板中 -->
+    <AppHeader />
 
     <main class="flex-1">
       <slot />

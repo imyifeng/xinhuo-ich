@@ -1,6 +1,6 @@
 // 薪火数据模型 —— 术语以根目录 GLOSSARY.md 为准
-// T3：技艺条目展示竖切（CraftItem 完整展示字段 / Inheritor / Tag / BehaviorEvent / 最小 User）。
-// User 完整认证字段（密码、角色流转）由 T2 扩展，此处仅保留会话契约所需的最小形态。
+// T2 新增 user（认证竖切）；T3 新增技艺条目展示竖切（CraftItem 完整展示字段 / Inheritor / Tag / BehaviorEvent）。
+// 后续工单按规格 #1 扩表（course、step、learning_record 等）。
 
 generator client {
   provider = "prisma-client"
@@ -10,6 +10,13 @@ generator client {
 // Prisma 7：连接 URL 不再写在 schema 里，CLI 走 prisma.config.ts，客户端走 driver adapter
 datasource db {
   provider = "postgresql"
+}
+
+/// 平台角色：学习者 / 传承人 / 管理员（传承人由管理员线下核实后标记，无线上自助认证）
+enum Role {
+  LEARNER
+  INHERITOR
+  ADMIN
 }
 
 /// 技艺条目发布状态：仅 PUBLISHED 对游客可见
@@ -30,6 +37,23 @@ enum BehaviorEventType {
   CREATE_POST
   /// 评论
   CREATE_COMMENT
+}
+
+/// 账号 —— 学习者、传承人与管理员的登录主体（自实现认证：argon2 哈希 + Redis 会话）
+model User {
+  id          Int      @id @default(autoincrement())
+  /// 登录用户名，全局唯一（3~30 字符）
+  username    String   @unique
+  /// 对外展示的昵称
+  displayName String   @map("display_name")
+  /// argon2 哈希，永不出库（见规格 #1 Implementation Decisions）
+  passwordHash String  @map("password_hash")
+  role        Role     @default(LEARNER)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  behaviorEvents BehaviorEvent[]
+
+  @@map("user")
 }
 
 /// 技艺条目 —— 平台内容的基本单元，对应传统技艺类非遗代表性名录中的一项
@@ -100,22 +124,6 @@ model CraftItemTag {
 
   @@id([craftItemId, tagId])
   @@map("craft_item_tag")
-}
-
-/// 学习者（最小形态：会话契约的外键目标与行为归属；认证字段由 T2 扩展）
-model User {
-  id Int @id @default(autoincrement())
-  /// 登录名
-  username String @unique
-  /// 密码哈希（argon2，T2 认证模块写入）
-  passwordHash String @map("password_hash")
-  /// 角色，取值即会话契约 SessionRole（LEARNER/INHERITOR/ADMIN）
-  role String @default("LEARNER") @map("role")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  behaviorEvents BehaviorEvent[]
-
-  @@map("user")
 }
 
 /// 学习行为事件 —— 画像的原始数据（仅登录用户），多态目标：targetType + targetId

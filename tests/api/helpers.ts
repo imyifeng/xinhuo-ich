@@ -56,11 +56,12 @@ function fixtureRedis(): Redis {
   return redisFixture
 }
 
-/** 造用户夹具（密码哈希占位即可，T3 不测认证） */
+/** 造用户夹具（密码哈希占位即可，T3 不测认证；displayName 为 T2 User 模型必填） */
 export async function createUser(prisma: PrismaClient, username?: string) {
   return prisma.user.create({
     data: {
       username: username ?? `learner-${Math.random().toString(36).slice(2)}`,
+      displayName: '测试学习者',
       passwordHash: 'test-hash',
       role: 'LEARNER',
     },

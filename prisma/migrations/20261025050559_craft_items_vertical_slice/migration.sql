@@ -54,17 +54,6 @@ CREATE TABLE "craft_item_tag" (
 );
 
 -- CreateTable
-CREATE TABLE "user" (
-    "id" SERIAL NOT NULL,
-    "username" TEXT NOT NULL,
-    "password_hash" TEXT NOT NULL,
-    "role" TEXT NOT NULL DEFAULT 'LEARNER',
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "user_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "behavior_event" (
     "id" TEXT NOT NULL,
     "user_id" INTEGER,
@@ -81,9 +70,6 @@ CREATE UNIQUE INDEX "inheritor_craft_item_id_name_key" ON "inheritor"("craft_ite
 
 -- CreateIndex
 CREATE UNIQUE INDEX "tag_name_key" ON "tag"("name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "user_username_key" ON "user"("username");
 
 -- CreateIndex
 CREATE INDEX "behavior_event_user_id_type_idx" ON "behavior_event"("user_id", "type");
