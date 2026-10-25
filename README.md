@@ -30,13 +30,22 @@ pnpm install
 
 # 4. 建库 + 种子数据
 pnpm db:migrate   # 开发期建表/改表（prisma migrate dev）
-pnpm db:seed      # 写入演示用技艺条目 + 演示管理员（admin / admin12345）
+pnpm db:seed      # 写入演示用技艺条目、5 门已发布课程与演示账号（见下）
 
 # 5. 启动应用（热载）
 pnpm dev          # http://localhost:3000
 ```
 
 打开 http://localhost:3000：首页展示品牌与来自数据库的实时统计（技艺条目数 / 覆盖子类别数）；`GET /api/health` 返回数据库与 Redis 连通状态及详情缓存统计（命中/未命中计数）。技艺条目详情接口带 cache-aside 缓存（`X-Cache: HIT | MISS | BYPASS` 响应头），实现见 `server/utils/services/cache.service.ts`。管理后台在 http://localhost:3000/admin（需用演示管理员或被标记为管理员角色的账号登录），后台写路径已接线 `invalidateCraftItem` 失效详情缓存。
+
+### 演示账号（仅开发/演示，种子幂等 upsert）
+
+| 角色 | 用户名 | 密码 | 用途 |
+| --- | --- | --- | --- |
+| 管理员 | `admin` | `admin12345` | /admin 管理后台（技艺条目、课程审核、账号等） |
+| 传承人 | `inheritor` | `inheritor12345` | /studio 创作中心，5 门演示课程的作者 |
+
+课程与学习进度（工单 #6）：`/courses` 浏览已发布课程（5 门演示课程挂在陶瓷/织绣/造纸印刷/金属加工/酿造各一个条目下）；条目详情页有「相关课程」区；传承人在 `/studio` 建课、编排步骤、提交审核；管理员在 `/admin/courses` 发布/驳回；学习者登录后在课程页标记步骤完成并查看进度（进度 = 已完成步骤数 / 总步骤数，开始课程与完成步骤分别落 `behavior_event` 的 `START_COURSE` / `COMPLETE_STEP`）。
 
 ## 测试
 
@@ -92,8 +101,9 @@ docker compose up -d --build
 ```
 app/                     # 前端（Vue 页面，Tailwind）
 server/
-  api/                   # 接入层：HTTP 端点（health、stats）
-  utils/services/        # 业务层：stats、health 等服务
+  api/                   # 接入层：HTTP 端点（auth、craft-items、courses、studio、admin 等）
+  utils/services/        # 业务层：认证、条目、课程、学习进度、缓存等服务
+  utils/session.ts       # 会话契约（Redis 会话，跨工单共享）
   utils/prisma.ts        # 数据访问层：Prisma 客户端单例
   utils/redis.ts         # 基础设施：Redis 客户端单例
 prisma/                  # schema、迁移、种子数据
