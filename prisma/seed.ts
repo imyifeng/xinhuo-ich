@@ -1,4 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg'
+import { hash } from '@node-rs/argon2'
 import { PrismaClient } from '../server/generated/prisma/client'
 import './load-env'
 import { SEED_CRAFT_ITEMS } from './seed-data'
@@ -65,14 +66,33 @@ async function seedCraftItems() {
   }
 }
 
+/**
+ * 演示管理员账号（工单 #5）：管理后台 /admin 需要管理员登录态，
+ * 注册接口只能造学习者，故由种子幂等 upsert 一个管理员（按用户名，存在则不动）。
+ * 仅用于开发/演示，生产库默认为空。
+ */
+async function seedAdminUser() {
+  await prisma.user.upsert({
+    where: { username: 'admin' },
+    create: {
+      username: 'admin',
+      displayName: '平台管理员',
+      passwordHash: await hash('admin12345'),
+      role: 'ADMIN',
+    },
+    update: {},
+  })
+}
+
 async function main() {
   await seedCraftItems()
+  await seedAdminUser()
   const [craftItems, tags, inheritors] = await Promise.all([
     prisma.craftItem.count(),
     prisma.tag.count(),
     prisma.inheritor.count(),
   ])
-  console.log(`[seed] 技艺条目 ${craftItems} 条、标签 ${tags} 个、传承人 ${inheritors} 位（幂等 upsert 完成）`)
+  console.log(`[seed] 技艺条目 ${craftItems} 条、标签 ${tags} 个、传承人 ${inheritors} 位、演示管理员 admin（幂等 upsert 完成）`)
 }
 
 main()
