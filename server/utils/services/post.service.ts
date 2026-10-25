@@ -1,5 +1,7 @@
 import type { Prisma } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
+import { recordBehaviorEvent } from './behavior-event.service'
+import { AuthError } from './auth.service'
 
 /**
  * 交流区业务层（工单 #7 / 用户故事 7~9、24）：帖子与评论的公开浏览与登录写入。
@@ -132,5 +134,52 @@ export async function getPostDetail(id: string): Promise<PostDetail | null> {
       createdAt: comment.createdAt.toISOString(),
     })),
     createdAt: row.createdAt.toISOString(),
+  }
+}
+
+/** 发帖校验规则：标题 1~80 字符、正文 1~5000 字符（均按首尾去空白计） */
+export const POST_TITLE_MAX_LENGTH = 80
+export const POST_CONTENT_MAX_LENGTH = 5000
+
+function normalizedString(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+/** 发帖（用户故事 8）：校验 → 落库（默认可见）→ 写 CREATE_POST 事件（规格 #1 故事 27 之四） */
+export async function createPost(authorId: number, input: unknown): Promise<PostDetail> {
+  const body = (typeof input === 'object' && input !== null ? input : {}) as Record<string, unknown>
+  const title = normalizedString(body.title)
+  const content = normalizedString(body.content)
+
+  if (!title || title.length > POST_TITLE_MAX_LENGTH) {
+    throw new AuthError(400, `标题需为 1~${POST_TITLE_MAX_LENGTH} 个字符`)
+  }
+  if (!content || content.length > POST_CONTENT_MAX_LENGTH) {
+    throw new AuthError(400, `正文需为 1~${POST_CONTENT_MAX_LENGTH} 个字符`)
+  }
+
+  const db = usePrisma()
+  const created = await db.post.create({
+    data: { authorId, title, content },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      createdAt: true,
+      author: { select: { id: true, displayName: true } },
+    },
+  })
+
+  await recordBehaviorEvent({ userId: authorId, type: 'CREATE_POST', targetType: 'POST', targetId: created.id })
+
+  return {
+    id: created.id,
+    title: created.title,
+    content: created.content,
+    author: { id: created.author.id, displayName: created.author.displayName },
+    comments: [],
+    createdAt: created.createdAt.toISOString(),
   }
 }
