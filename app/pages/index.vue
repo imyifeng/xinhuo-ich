@@ -15,22 +15,7 @@ useHead({
 
 <template>
   <div class="flex min-h-screen flex-col">
-    <header class="border-b border-stone-200 bg-white">
-      <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <div class="flex items-baseline gap-2">
-          <span class="text-xl font-bold tracking-wide">薪火</span>
-          <span class="text-sm text-stone-400">Xinhuo · ICH</span>
-        </div>
-        <nav class="text-sm text-stone-500">
-          <!-- 占位导航：技艺条目 / 课程 / 交流区 由后续工单实现 -->
-          <span>技艺条目</span>
-          <span class="mx-2 text-stone-300">·</span>
-          <span>课程</span>
-          <span class="mx-2 text-stone-300">·</span>
-          <span>交流区</span>
-        </nav>
-      </div>
-    </header>
+    <AppHeader />
 
     <main class="flex-1">
       <section class="border-b border-stone-200 bg-gradient-to-b from-orange-50 to-stone-50">
