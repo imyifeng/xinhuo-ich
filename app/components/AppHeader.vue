@@ -41,10 +41,10 @@ async function onLogout() {
       </NuxtLink>
 
       <nav class="flex items-center gap-3 text-sm text-stone-500">
-        <!-- 技艺条目（T3 已实现）；课程 / 交流区 由后续工单实现 -->
+        <!-- 技艺条目（T3 已实现）；课程（T5 已实现）；交流区 由后续工单实现 -->
         <NuxtLink to="/craft-items" class="hidden transition hover:text-orange-600 sm:inline">技艺条目</NuxtLink>
         <span class="hidden text-stone-300 sm:inline">·</span>
-        <span class="hidden sm:inline">课程</span>
+        <NuxtLink to="/courses" class="hidden transition hover:text-orange-600 sm:inline">课程</NuxtLink>
         <span class="hidden text-stone-300 sm:inline">·</span>
         <span class="hidden sm:inline">交流区</span>
 
@@ -52,6 +52,14 @@ async function onLogout() {
         <span class="mx-1 h-4 w-px bg-stone-200" aria-hidden="true" />
         <template v-if="user">
           <span class="text-stone-700">你好，{{ user.displayName }}</span>
+          <!-- 传承人创作入口（工单 #6）：课程创作工作台，管理员亦可进入 -->
+          <NuxtLink
+            v-if="user.role === 'INHERITOR' || user.role === 'ADMIN'"
+            to="/studio"
+            class="transition hover:text-orange-600"
+          >
+            创作中心
+          </NuxtLink>
           <!-- 管理员入口（工单 #5）：/admin 管理后台 -->
           <NuxtLink
             v-if="user.role === 'ADMIN'"

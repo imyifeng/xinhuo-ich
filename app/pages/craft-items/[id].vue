@@ -22,6 +22,17 @@ if (error.value || !item.value) {
   throw createError({ statusCode: 404, statusMessage: '技艺条目不存在', fatal: true })
 }
 
+// 相关课程（工单 #6）：本条目下已发布的课程，引导学习者进入学习竖切
+interface CourseSummary {
+  id: string
+  title: string
+  intro: string
+  stepCount: number
+}
+const { data: relatedCourses } = await useFetch<{ items: CourseSummary[] }>(`/api/courses?craftItemId=${route.params.id}`, {
+  default: () => ({ items: [] }),
+})
+
 // B 站外链转内嵌播放器（仅识别标准 BV 号链接，其余以外部链接呈现）
 const bilibiliBV = computed(() => {
   const url = item.value?.videoUrl
@@ -114,6 +125,25 @@ useHead({ title: `${item.value.name} · 薪火`, htmlAttrs: { lang: 'zh-CN' } })
           >
             在 B 站观看视频 ↗
           </a>
+        </section>
+
+        <!-- 相关课程（工单 #6）：挂在本条目下的已发布课程 -->
+        <section v-if="relatedCourses.items.length">
+          <h2 class="text-lg font-semibold">相关课程</h2>
+          <div class="mt-3 space-y-3">
+            <NuxtLink
+              v-for="course in relatedCourses.items"
+              :key="course.id"
+              :to="`/courses/${course.id}`"
+              class="block rounded-xl border border-stone-200 bg-white p-5 transition hover:border-orange-300"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <h3 class="font-semibold">{{ course.title }}</h3>
+                <span class="text-xs text-stone-400">{{ course.stepCount }} 个步骤</span>
+              </div>
+              <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-stone-500">{{ course.intro }}</p>
+            </NuxtLink>
+          </div>
         </section>
       </div>
 

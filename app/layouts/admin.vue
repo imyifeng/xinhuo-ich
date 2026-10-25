@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * 管理后台布局（/admin 专用，工单 #5）：侧边导航（技艺条目/传承人/标签/账号）+ 顶栏。
+ * 管理后台布局（/admin 专用，工单 #5）：侧边导航（技艺条目/课程审核/传承人/标签/账号）+ 顶栏。
  * 仅需能用，不追求美观（工单约定）；页面全部声明 layout: 'admin' 与 middleware: 'admin'。
  */
 const route = useRoute()
@@ -34,6 +34,7 @@ async function onLogout() {
       <aside class="w-48 shrink-0 border-r border-stone-200 bg-white">
         <el-menu :default-active="activeMenu" router class="border-r-0">
           <el-menu-item index="craft-items" route="/admin/craft-items">技艺条目</el-menu-item>
+          <el-menu-item index="courses" route="/admin/courses">课程审核</el-menu-item>
           <el-menu-item index="inheritors" route="/admin/inheritors">传承人</el-menu-item>
           <el-menu-item index="tags" route="/admin/tags">标签</el-menu-item>
           <el-menu-item index="users" route="/admin/users">账号</el-menu-item>

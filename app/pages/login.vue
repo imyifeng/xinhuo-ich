@@ -10,8 +10,16 @@ const fieldErrors = ref<{ username?: string, password?: string }>({})
 const errorMessage = ref('')
 const submitting = ref(false)
 
+const route = useRoute()
+
 // 从注册页跳转过来时给出成功提示
-const justRegistered = computed(() => useRoute().query.registered === '1')
+const justRegistered = computed(() => route.query.registered === '1')
+
+// 登录后回跳（如课程页「开始学习」引导登录，工单 #6）：仅允许站内路径，防开放重定向
+const redirectTo = computed(() => {
+  const target = route.query.redirect
+  return typeof target === 'string' && target.startsWith('/') && !target.startsWith('//') ? target : '/'
+})
 
 function validate(): boolean {
   fieldErrors.value = {}
@@ -34,7 +42,7 @@ async function onSubmit() {
       body: { username: username.value.trim(), password: password.value },
     })
     await refreshNuxtData('auth-me')
-    await navigateTo('/')
+    await navigateTo(redirectTo.value)
   }
   catch (err) {
     errorMessage.value = apiErrorMessage(err)
