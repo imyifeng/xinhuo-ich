@@ -1,0 +1,26 @@
+// 薪火数据模型 —— 术语以根目录 GLOSSARY.md 为准
+// T1 仅含支撑首页计数演示的最小模型；后续工单按规格 #1 扩表（user、course、step 等）。
+
+generator client {
+  provider = "prisma-client"
+  output   = "../server/generated/prisma"
+}
+
+// Prisma 7：连接 URL 不再写在 schema 里，CLI 走 prisma.config.ts，客户端走 driver adapter
+datasource db {
+  provider = "postgresql"
+}
+
+/// 技艺条目 —— 平台内容的基本单元，对应传统技艺类非遗代表性名录中的一项
+model CraftItem {
+  id        String   @id @default(cuid())
+  name      String   @unique @map("name")
+  /// 子类别（陶瓷、织绣、漆器、造纸印刷、金属加工、酿造等）
+  category  String   @map("category")
+  /// 申报地区
+  region    String   @map("region")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("craft_item")
+}
