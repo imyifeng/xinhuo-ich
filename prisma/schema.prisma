@@ -168,7 +168,8 @@ model BehaviorEvent {
   @@map("behavior_event")
 }
 
-/// 课程 —— 某个技艺条目下的结构化图文教程，由传承人（或管理员）账号创建并维护（工单 #6）model Course {
+/// 课程 —— 某个技艺条目下的结构化图文教程，由传承人（或管理员）账号创建并维护（工单 #6）
+model Course {
   id String @id @default(cuid())
   /// 课程标题
   title String
