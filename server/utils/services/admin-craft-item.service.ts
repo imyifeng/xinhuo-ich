@@ -1,7 +1,7 @@
 import type { CraftItem, CraftItemStatus, Prisma } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
 import { AdminError, isRecordNotFound, isUniqueViolation } from './admin-error'
-import { asImageList, normalizePagination } from './craft-item.service'
+import { asImageList, invalidateCraftItem, normalizePagination } from './craft-item.service'
 
 /**
  * 技艺条目管理业务层（工单 #5 / 用户故事 19-20）：
@@ -264,7 +264,8 @@ export async function createAdminCraftItem(input: unknown): Promise<AdminCraftIt
   }
 }
 
-/** 更新条目（整体替换语义，含标签关联替换）：不存在 404，名称冲突 409 */
+/** 更新条目（整体替换语义，含标签关联替换）：不存在 404，名称冲突 409；
+ *  成功后失效详情缓存（工单 #9 接线：状态切换/字段变更立即对公网可见） */
 export async function updateAdminCraftItem(id: string, input: unknown): Promise<AdminCraftItemDetail> {
   const data = parseWriteInput(input)
   await assertTagsExist(data.tagIds)
@@ -291,6 +292,7 @@ export async function updateAdminCraftItem(id: string, input: unknown): Promise<
       },
       include: { tags: { select: { tagId: true } } },
     })
+    await invalidateCraftItem(row.id)
     return toDetail(row)
   }
   catch (error) {
@@ -300,7 +302,7 @@ export async function updateAdminCraftItem(id: string, input: unknown): Promise<
   }
 }
 
-/** 删除条目：传承人与条目标签由外键级联解除；不存在 404 */
+/** 删除条目：传承人与条目标签由外键级联解除；不存在 404；成功后失效详情缓存（公网随即 404） */
 export async function deleteAdminCraftItem(id: string): Promise<void> {
   try {
     await usePrisma().craftItem.delete({ where: { id } })
@@ -309,4 +311,5 @@ export async function deleteAdminCraftItem(id: string): Promise<void> {
     if (isRecordNotFound(error)) throw new AdminError(404, '技艺条目不存在')
     throw error
   }
+  await invalidateCraftItem(id)
 }

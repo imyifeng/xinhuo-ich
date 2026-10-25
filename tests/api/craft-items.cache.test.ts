@@ -3,7 +3,7 @@ import { $fetch, fetch, setup } from '@nuxt/test-utils/e2e'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../../server/generated/prisma/client'
 import { invalidateCraftItem } from '../../server/utils/services/craft-item.service'
-import { createCraftItem, resetCraftItemTables } from './helpers'
+import { createCraftItem, createSessionCookie, createUser, resetCraftItemTables } from './helpers'
 
 /** /api/health 响应中与本工单相关的缓存统计段 */
 interface HealthBody {
@@ -113,5 +113,51 @@ describe('GET /api/craft-items/:id 缓存（cache-aside）', async () => {
     // 互斥重建可观测：20 个并发请求只产生 1 次回源（MISS 计数）
     const healthAfter = await $fetch<HealthBody>('/api/health')
     expect(healthAfter.cache.miss - healthBefore.cache.miss).toBe(1)
+  })
+
+  it('管理端更新/删除后详情缓存自动失效：更新即 MISS 取新值，删除即 404（T4 写路径接线）', async () => {
+    await resetCraftItemTables(prisma)
+    const admin = await createUser(prisma, `cache_admin_${Math.random().toString(36).slice(2, 8)}`, 'ADMIN')
+    const adminCookie = await createSessionCookie(admin.id, 'ADMIN')
+    const item = await createCraftItem(prisma, { name: '接线前' })
+
+    const warm = await fetch(`/api/craft-items/${item.id}`)
+    expect(warm.headers.get('x-cache')).toBe('MISS')
+    expect((await warm.json()).name).toBe('接线前')
+
+    // 管理端更新（整体替换语义）：写路径应自动失效详情缓存
+    const putRes = await fetch(`/api/admin/craft-items/${item.id}`, {
+      method: 'PUT',
+      headers: { cookie: adminCookie, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: '接线后',
+        subcategory: '陶瓷',
+        batch: '第一批（2006 年）',
+        code: 'Ⅷ-7',
+        region: '江西省',
+        history: '历史渊源',
+        features: '工艺特色',
+        images: [],
+        videoUrl: null,
+        status: 'PUBLISHED',
+        tagIds: [],
+      }),
+    })
+    expect(putRes.status).toBe(200)
+
+    const rebuilt = await fetch(`/api/craft-items/${item.id}`)
+    expect(rebuilt.headers.get('x-cache')).toBe('MISS')
+    expect((await rebuilt.json()).name).toBe('接线后')
+
+    // 管理端删除：写路径应自动失效，公网详情立即 404（而非残留旧值 200）
+    const delRes = await fetch(`/api/admin/craft-items/${item.id}`, {
+      method: 'DELETE',
+      headers: { cookie: adminCookie },
+    })
+    expect(delRes.status).toBe(200)
+
+    const gone = await fetch(`/api/craft-items/${item.id}`)
+    expect(gone.status).toBe(404)
+    expect(gone.headers.get('x-cache')).toBe('MISS')
   })
 })
