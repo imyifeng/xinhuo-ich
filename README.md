@@ -30,13 +30,13 @@ pnpm install
 
 # 4. 建库 + 种子数据
 pnpm db:migrate   # 开发期建表/改表（prisma migrate dev）
-pnpm db:seed      # 写入演示用技艺条目
+pnpm db:seed      # 写入演示用技艺条目 + 演示管理员（admin / admin12345）
 
 # 5. 启动应用（热载）
 pnpm dev          # http://localhost:3000
 ```
 
-打开 http://localhost:3000：首页展示品牌与来自数据库的实时统计（技艺条目数 / 覆盖子类别数）；`GET /api/health` 返回数据库与 Redis 连通状态。
+打开 http://localhost:3000：首页展示品牌与来自数据库的实时统计（技艺条目数 / 覆盖子类别数）；`GET /api/health` 返回数据库与 Redis 连通状态。管理后台在 http://localhost:3000/admin（需用演示管理员或被标记为管理员角色的账号登录）。
 
 ## 测试
 

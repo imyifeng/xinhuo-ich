@@ -12,6 +12,7 @@ describe('管理端访问控制', async () => {
 
   let prisma: PrismaClient
   let learnerCookie: string
+  let adminCookie: string
 
   beforeAll(async () => {
     prisma = new PrismaClient({
@@ -19,7 +20,9 @@ describe('管理端访问控制', async () => {
     })
     await resetCraftItemTables(prisma)
     const learner = await createUser(prisma, 'guard_learner')
+    const admin = await createUser(prisma, 'guard_admin', 'ADMIN')
     learnerCookie = await createSessionCookie(learner.id)
+    adminCookie = await createSessionCookie(admin.id, 'ADMIN')
   })
 
   afterAll(async () => {
@@ -52,5 +55,18 @@ describe('管理端访问控制', async () => {
   it('伪造无效会话访问管理接口同样 403', async () => {
     const res = await apiFetch('/api/admin/users', { headers: { cookie: 'xinhuo_session=forged-token' } })
     expect(res.status).toBe(403)
+  })
+
+  it('管理员打开 /admin 跳到技艺条目页，且管理页面真实渲染（不再被弹回 /login）', async () => {
+    // /admin 首页 302 到 /admin/craft-items（页面内重定向）
+    const home = await apiFetch('/admin', { headers: { cookie: adminCookie }, redirect: 'manual' })
+    expect(home.status).toBe(302)
+    expect(home.headers.get('location')).toBe('/admin/craft-items')
+
+    // 管理页面 SSR 直接 200（若守卫误判会 302 → /login）
+    const items = await apiFetch('/admin/craft-items', { headers: { cookie: adminCookie }, redirect: 'manual' })
+    expect(items.status).toBe(200)
+    const html = await items.text()
+    expect(html).toContain('新增条目')
   })
 })

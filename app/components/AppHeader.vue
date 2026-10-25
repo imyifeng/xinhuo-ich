@@ -52,6 +52,14 @@ async function onLogout() {
         <span class="mx-1 h-4 w-px bg-stone-200" aria-hidden="true" />
         <template v-if="user">
           <span class="text-stone-700">你好，{{ user.displayName }}</span>
+          <!-- 管理员入口（工单 #5）：/admin 管理后台 -->
+          <NuxtLink
+            v-if="user.role === 'ADMIN'"
+            to="/admin"
+            class="transition hover:text-orange-600"
+          >
+            管理后台
+          </NuxtLink>
           <button
             class="rounded-lg border border-stone-300 px-3 py-1 transition hover:border-stone-400 hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="loggingOut"
