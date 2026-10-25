@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto'
+import Redis from 'ioredis'
 import type { PrismaClient } from '../../server/generated/prisma/client'
 
 /** 测试夹具工厂：条目默认字段随 schema 演进，仅暴露测试关心的覆盖项 */
@@ -37,4 +39,43 @@ export async function resetCraftItemTables(prisma: PrismaClient) {
   await prisma.tag.deleteMany()
   await prisma.inheritor.deleteMany()
   await prisma.craftItem.deleteMany()
+}
+
+// ---- 会话夹具：与 server/utils/session.ts 的共享契约一致（勿改格式） ----
+
+const SESSION_COOKIE = 'xinhuo_session'
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
+
+let redisFixture: Redis | null = null
+
+function fixtureRedis(): Redis {
+  redisFixture ??= new Redis(process.env.REDIS_URL ?? 'redis://localhost:6380/2', {
+    lazyConnect: true,
+    maxRetriesPerRequest: 2,
+  })
+  return redisFixture
+}
+
+/** 造用户夹具（密码哈希占位即可，T3 不测认证） */
+export async function createUser(prisma: PrismaClient, username?: string) {
+  return prisma.user.create({
+    data: {
+      username: username ?? `learner-${Math.random().toString(36).slice(2)}`,
+      passwordHash: 'test-hash',
+      role: 'LEARNER',
+    },
+  })
+}
+
+/** 按会话契约直接向 Redis 写 session:<token>，返回可直接放进请求头的 Cookie 值 */
+export async function createSessionCookie(userId: number, role = 'LEARNER'): Promise<string> {
+  const token = randomBytes(32).toString('base64url')
+  const payload = { userId, role, createdAt: new Date().toISOString() }
+  await fixtureRedis().set(`session:${token}`, JSON.stringify(payload), 'EX', SESSION_TTL_SECONDS)
+  return `${SESSION_COOKIE}=${token}`
+}
+
+export async function disconnectFixtureRedis() {
+  await redisFixture?.quit()
+  redisFixture = null
 }

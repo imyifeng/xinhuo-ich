@@ -1,5 +1,6 @@
 import type { Prisma } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
+import { recordBehaviorEvent } from './behavior-event.service'
 
 /** 列表页默认与上限：无翻页器时每页 12 条，防大分页拖垮查询 */
 export const CRAFT_ITEM_PAGE_SIZE_DEFAULT = 12
@@ -126,8 +127,9 @@ export interface CraftItemDetail {
   inheritors: InheritorView[]
 }
 
-/** 技艺条目详情：不存在或未发布返回 null（由接入层转 404） */
-export async function getCraftItemDetail(id: string): Promise<CraftItemDetail | null> {
+/** 技艺条目详情：不存在或未发布返回 null（由接入层转 404）；
+ *  viewerUserId 为登录用户时记录一条 VIEW_ITEM 事件，游客（null）不记 */
+export async function getCraftItemDetail(id: string, viewerUserId?: number | null): Promise<CraftItemDetail | null> {
   const db = usePrisma()
   const row = await db.craftItem.findUnique({
     where: { id },
@@ -137,6 +139,10 @@ export async function getCraftItemDetail(id: string): Promise<CraftItemDetail | 
     },
   })
   if (!row || row.status !== 'PUBLISHED') return null
+
+  if (viewerUserId != null) {
+    await recordBehaviorEvent({ userId: viewerUserId, type: 'VIEW_ITEM', targetType: 'CRAFT_ITEM', targetId: row.id })
+  }
 
   return {
     id: row.id,
