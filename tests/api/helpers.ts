@@ -41,6 +41,50 @@ export async function resetCraftItemTables(prisma: PrismaClient) {
   await prisma.craftItem.deleteMany()
 }
 
+// ---- 交流区夹具（工单 #7）----
+
+/** 帖子夹具：默认可见，暴露测试关心的覆盖项 */
+export async function createPost(
+  prisma: PrismaClient,
+  authorId: number,
+  overrides: Partial<{ title: string, content: string, status: 'VISIBLE' | 'HIDDEN', createdAt: Date }> = {},
+) {
+  return prisma.post.create({
+    data: {
+      authorId,
+      title: overrides.title ?? `测试帖子-${Math.random().toString(36).slice(2)}`,
+      content: overrides.content ?? '测试正文',
+      status: overrides.status ?? 'VISIBLE',
+      ...(overrides.createdAt ? { createdAt: overrides.createdAt } : {}),
+    },
+  })
+}
+
+/** 评论夹具：默认可见 */
+export async function createComment(
+  prisma: PrismaClient,
+  postId: string,
+  authorId: number,
+  overrides: Partial<{ content: string, status: 'VISIBLE' | 'HIDDEN' }> = {},
+) {
+  return prisma.comment.create({
+    data: {
+      postId,
+      authorId,
+      content: overrides.content ?? '测试评论',
+      status: overrides.status ?? 'VISIBLE',
+    },
+  })
+}
+
+/** 清空交流区相关表（评论级联于帖子；事件与用户一并清空） */
+export async function resetPostTables(prisma: PrismaClient) {
+  await prisma.behaviorEvent.deleteMany()
+  await prisma.comment.deleteMany()
+  await prisma.post.deleteMany()
+  await prisma.user.deleteMany()
+}
+
 // ---- 会话夹具：与 server/utils/session.ts 的共享契约一致（勿改格式） ----
 
 const SESSION_COOKIE = 'xinhuo_session'
