@@ -1,5 +1,6 @@
 // 薪火数据模型 —— 术语以根目录 GLOSSARY.md 为准
-// T1 仅含支撑首页计数演示的最小模型；后续工单按规格 #1 扩表（user、course、step 等）。
+// T3：技艺条目展示竖切（CraftItem 完整展示字段 / Inheritor / Tag / BehaviorEvent / 最小 User）。
+// User 完整认证字段（密码、角色流转）由 T2 扩展，此处仅保留会话契约所需的最小形态。
 
 generator client {
   provider = "prisma-client"
@@ -11,16 +12,127 @@ datasource db {
   provider = "postgresql"
 }
 
+/// 技艺条目发布状态：仅 PUBLISHED 对游客可见
+enum CraftItemStatus {
+  DRAFT
+  PUBLISHED
+}
+
+/// 学习行为事件类型（规格 #1 用户故事 27 的五类，仅登录用户记录）
+enum BehaviorEventType {
+  /// 浏览技艺条目详情
+  VIEW_ITEM
+  /// 开始课程
+  START_COURSE
+  /// 完成步骤
+  COMPLETE_STEP
+  /// 发帖
+  CREATE_POST
+  /// 评论
+  CREATE_COMMENT
+}
+
 /// 技艺条目 —— 平台内容的基本单元，对应传统技艺类非遗代表性名录中的一项
 model CraftItem {
-  id        String   @id @default(cuid())
-  name      String   @unique @map("name")
+  id String @id @default(cuid())
+  name String @unique
   /// 子类别（陶瓷、织绣、漆器、造纸印刷、金属加工、酿造等）
-  category  String   @map("category")
+  subcategory String @map("subcategory")
+  /// 列入国家级名录的批次（如“第一批（2006 年）”）
+  batch String @map("batch")
+  /// 国家级名录编号（如“Ⅷ-1”）
+  code String @map("code")
   /// 申报地区
-  region    String   @map("region")
+  region String @map("region")
+  /// 历史渊源
+  history String @map("history")
+  /// 工艺特色
+  features String @map("features")
+  /// 图集：{url, credit} 数组，credit 标注图片出处与许可
+  images Json @default("[]")
+  /// 视频外链（B 站），可空
+  videoUrl String? @map("video_url")
+  status CraftItemStatus @default(PUBLISHED)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  inheritors Inheritor[]
+  tags CraftItemTag[]
+
+  @@index([status, subcategory])
   @@map("craft_item")
+}
+
+/// 传承人 —— 非遗代表性传承人，作为平台展示的人物实体挂在技艺条目下
+model Inheritor {
+  id String @id @default(cuid())
+  name String @map("name")
+  /// 人物简介
+  bio String @map("bio")
+  /// 代表性传承人级别（国家级/省级等）
+  level String @map("level")
+  craftItemId String @map("craft_item_id")
+
+  craftItem CraftItem @relation(fields: [craftItemId], references: [id], onDelete: Cascade)
+
+  /// 同一条目下传承人姓名唯一，支撑种子幂等 upsert
+  @@unique([craftItemId, name])
+  @@map("inheritor")
+}
+
+/// 条目标签 —— 推荐算法的数据源
+model Tag {
+  id String @id @default(cuid())
+  name String @unique
+
+  items CraftItemTag[]
+
+  @@map("tag")
+}
+
+/// 技艺条目 ↔ 标签 多对多
+model CraftItemTag {
+  craftItemId String @map("craft_item_id")
+  tagId String @map("tag_id")
+
+  craftItem CraftItem @relation(fields: [craftItemId], references: [id], onDelete: Cascade)
+  tag Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([craftItemId, tagId])
+  @@map("craft_item_tag")
+}
+
+/// 学习者（最小形态：会话契约的外键目标与行为归属；认证字段由 T2 扩展）
+model User {
+  id Int @id @default(autoincrement())
+  /// 登录名
+  username String @unique
+  /// 密码哈希（argon2，T2 认证模块写入）
+  passwordHash String @map("password_hash")
+  /// 角色，取值即会话契约 SessionRole（LEARNER/INHERITOR/ADMIN）
+  role String @default("LEARNER") @map("role")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  behaviorEvents BehaviorEvent[]
+
+  @@map("user")
+}
+
+/// 学习行为事件 —— 画像的原始数据（仅登录用户），多态目标：targetType + targetId
+model BehaviorEvent {
+  id String @id @default(cuid())
+  /// 触发者；游客不产生事件，理论非空，保留可空以容错脏数据
+  userId Int? @map("user_id")
+  type BehaviorEventType @map("type")
+  /// 目标类型（如 CRAFT_ITEM / COURSE / POST / COMMENT）
+  targetType String @map("target_type")
+  /// 目标 ID（多态，不设数据库外键）
+  targetId String @map("target_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, type])
+  @@index([type, targetId])
+  @@map("behavior_event")
 }
