@@ -1,0 +1,511 @@
+{
+  "meta": {
+    "generator": "newman 6.2.3",
+    "collection": "薪火平台 API（报告素材 · 黑盒测试）",
+    "executedAt": "2026-10-25T07:57:07.522Z",
+    "baseUrl": "http://localhost:3001（本机验证运行；集合变量 base_url 默认 http://localhost:3000）",
+    "dataState": "demo:seed 后的演示数据库",
+    "note": "由 `npx newman run` 全量执行（--reporter-json-export）后用脚本提炼；assertions.passed=false 表示该断言在本次运行失败。"
+  },
+  "stats": {
+    "iterations": {
+      "total": 1,
+      "pending": 0,
+      "failed": 0
+    },
+    "items": {
+      "total": 27,
+      "pending": 0,
+      "failed": 0
+    },
+    "scripts": {
+      "total": 27,
+      "pending": 0,
+      "failed": 0
+    },
+    "prerequests": {
+      "total": 27,
+      "pending": 0,
+      "failed": 0
+    },
+    "requests": {
+      "total": 27,
+      "pending": 0,
+      "failed": 0
+    },
+    "tests": {
+      "total": 27,
+      "pending": 0,
+      "failed": 0
+    },
+    "assertions": {
+      "total": 52,
+      "pending": 0,
+      "failed": 0
+    },
+    "testScripts": {
+      "total": 27,
+      "pending": 0,
+      "failed": 0
+    },
+    "prerequestScripts": {
+      "total": 0,
+      "pending": 0,
+      "failed": 0
+    }
+  },
+  "failures": [],
+  "executions": [
+    {
+      "item": "健康检查",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 22,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "status 为 ok",
+          "passed": true
+        },
+        {
+          "assertion": "数据库与 Redis 均 up",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "平台统计",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 9,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "技艺条目数大于 0",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "注册（新建演示用户）",
+      "method": "POST",
+      "url": "[object Object]",
+      "response": "201 Created",
+      "timeMs": 13,
+      "assertions": [
+        {
+          "assertion": "状态码 201",
+          "passed": true
+        },
+        {
+          "assertion": "返回公开用户信息且不含密码哈希",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "登录（学习者 taotao）",
+      "method": "POST",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 11,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "响应下发 xinhuo_session Cookie",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "我的信息",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 4,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "当前用户为演示学习者 taotao",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "条目列表",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 11,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "返回列表且总数大于 0",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "条目列表（按子类别筛选）",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 6,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "所有条目 subcategory 一致",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "条目详情",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 6,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "携带 X-Cache 响应头",
+          "passed": true
+        },
+        {
+          "assertion": "详情含传承人与标签字段",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "课程列表",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 6,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "已发布课程非空",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "课程详情（登录态）",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 6,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "步骤列表非空且含完成标记",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "开始课程",
+      "method": "POST",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 4,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "标记步骤完成",
+      "method": "POST",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 5,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "返回进度计数",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "我的课程进度",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 6,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "返回进度列表",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "帖子列表",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 6,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "帖子列表非空",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "帖子详情",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 5,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "详情含标题与评论数组",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "发帖（登录态）",
+      "method": "POST",
+      "url": "[object Object]",
+      "response": "201 Created",
+      "timeMs": 8,
+      "assertions": [
+        {
+          "assertion": "状态码 201",
+          "passed": true
+        },
+        {
+          "assertion": "返回新帖 ID",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "评论帖子（登录态）",
+      "method": "POST",
+      "url": "[object Object]",
+      "response": "201 Created",
+      "timeMs": 7,
+      "assertions": [
+        {
+          "assertion": "状态码 201",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "我的推荐（登录态）",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 6,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "返回画像标签与推荐条目",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "登录（管理员 admin）",
+      "method": "POST",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 10,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "角色为管理员",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "条目列表（管理视角）",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 6,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "返回列表",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "创建条目（CRUD 一例 · 创建）",
+      "method": "POST",
+      "url": "[object Object]",
+      "response": "201 Created",
+      "timeMs": 6,
+      "assertions": [
+        {
+          "assertion": "状态码 201",
+          "passed": true
+        },
+        {
+          "assertion": "返回新条目 ID",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "删除条目（CRUD 一例 · 删除）",
+      "method": "DELETE",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 5,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "内容审核一例：下架演示帖",
+      "method": "PUT",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 6,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "画像统计",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 4,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "画像总数大于 0",
+          "passed": true
+        },
+        {
+          "assertion": "簇分布非空",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "画像重建（手动触发）",
+      "method": "POST",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 14,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "返回画像重建计数",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "登出",
+      "method": "POST",
+      "url": "[object Object]",
+      "response": "200 OK",
+      "timeMs": 2,
+      "assertions": [
+        {
+          "assertion": "状态码 200",
+          "passed": true
+        },
+        {
+          "assertion": "返回 ok",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "item": "登出后访问我的信息（预期 401）",
+      "method": "GET",
+      "url": "[object Object]",
+      "response": "401 Unauthorized",
+      "timeMs": 3,
+      "assertions": [
+        {
+          "assertion": "状态码 401（会话已失效）",
+          "passed": true
+        }
+      ]
+    }
+  ]
+}

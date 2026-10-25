@@ -1,0 +1,812 @@
+{
+  "info": {
+    "name": "薪火平台 API（报告素材 · 黑盒测试）",
+    "description": "薪火（Xinhuo · ICH）平台主要接口的 Postman 集合，对应报告第 6 章「系统测试」的黑盒/接口测试素材。\n\n## 使用说明\n\n1. **启动服务**：按仓库 README 快速开始（`cp .env.example .env` → `docker compose -f compose.dev.yaml up -d` → `pnpm install` → `pnpm db:migrate` → `pnpm demo:seed` → `pnpm dev`），默认地址 `http://localhost:3000`。若端口不同，修改集合变量 `base_url`。\n2. **登录态（会话 Cookie）**：认证为自实现会话——服务端下发 httpOnly Cookie `xinhuo_session`，后续请求以请求头 `Cookie: xinhuo_session=<token>` 携带。\n   - 本集合**不需要手工复制 Cookie**：请求「认证与账号 → 登录（学习者）」的测试脚本会自动从响应 `Set-Cookie` 提取 token 写入集合变量 `{{session_cookie}}`；「管理端 → 登录（管理员）」同理写入 `{{admin_cookie}}`。\n   - 所有需要登录态的请求已在请求头预置 `Cookie: xinhuo_session={{session_cookie}}` 或 `Cookie: xinhuo_session={{admin_cookie}}`，在 Postman 中**从上到下依次执行**即可全程保持登录态。\n3. **ID 链式传递**：种子数据的 cuid 每个环境不同，集合不写死 ID——列表请求的测试脚本会把首个条目/课程/帖子的 ID 提取到集合变量（如 `{{craft_item_id}}`、`{{course_id}}`、`{{step_id}}`、`{{post_id}}`），后续请求直接引用；发帖请求会把新建帖子 ID 存入 `{{created_post_id}}`，供管理端「内容审核」下架演示。\n4. **命令行整包运行**：`npx newman run docs/report-assets/postman/xinhuo-api.postman_collection.json`（可加 `-e` 环境文件覆盖 `base_url`；输出摘要归档于同目录 `newman-run-summary.json`）。\n5. **写接口会改动演示数据**（注册一个演示用户、发一帖一评、开始课程、下架演示帖）；管理端「创建条目」后即「删除条目」自清理。需要还原纯净演示数据时重跑 `pnpm demo:seed`（行为事件/画像/推荐先清后造）。\n6. 缓存说明：条目详情接口响应头携带 `X-Cache: HIT | MISS | BYPASS`（Redis cache-aside，工单 #9），可作为接口测试观察点。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter": "hand-written (T10 工单 #11)"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000", "description": "被测服务根地址；默认开发端口 3000，如不同请修改" },
+    { "key": "session_cookie", "value": "", "description": "学习者会话 token，由「登录（学习者）」测试脚本自动写入；请求头形如 Cookie: xinhuo_session={{session_cookie}}" },
+    { "key": "admin_cookie", "value": "", "description": "管理员会话 token，由「登录（管理员）」测试脚本自动写入" },
+    { "key": "craft_item_id", "value": "", "description": "技艺条目 ID，由「条目列表」脚本提取首个已发布条目" },
+    { "key": "subcategory", "value": "", "description": "子类别名（如「陶瓷」），由「条目列表」脚本提取，供筛选示例" },
+    { "key": "course_id", "value": "", "description": "课程 ID，由「课程列表」脚本提取首个已发布课程" },
+    { "key": "step_id", "value": "", "description": "步骤 ID，由「课程详情」脚本提取首步" },
+    { "key": "post_id", "value": "", "description": "帖子 ID，由「帖子列表」脚本提取首个可见帖" },
+    { "key": "created_post_id", "value": "", "description": "「发帖」新建帖子的 ID，供管理端内容审核下架演示" },
+    { "key": "created_item_id", "value": "", "description": "「创建条目」新建条目的 ID，供「删除条目」自清理" }
+  ],
+  "item": [
+    {
+      "name": "基础接口（公开）",
+      "description": "无需登录态的公开接口：健康检查与平台统计。",
+      "item": [
+        {
+          "name": "健康检查",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/health", "host": ["{{base_url}}"], "path": ["api", "health"] },
+            "description": "数据库不可用返回 503；Redis 不可用仅标记 degraded 仍返回 200。响应含详情缓存命中/未命中计数（cache.hit / cache.miss）。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('status 为 ok', () => pm.expect(body.status).to.eql('ok'));",
+                  "pm.test('数据库与 Redis 均 up', () => {",
+                  "  pm.expect(body.checks.database).to.eql('up');",
+                  "  pm.expect(body.checks.redis).to.eql('up');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "平台统计",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/stats", "host": ["{{base_url}}"], "path": ["api", "stats"] },
+            "description": "首页展示用：技艺条目总数与覆盖子类别数（仅已发布条目）。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('技艺条目数大于 0', () => pm.expect(Number(body.craftItemCount)).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "认证与账号",
+      "description": "auth 四端点。登录请求的测试脚本自动捕获会话 Cookie 到 {{session_cookie}}；登出因会销毁会话，安排在集合最后一组执行，保证中间的登录态接口全程可用。",
+      "item": [
+        {
+          "name": "注册（新建演示用户）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"report_demo_{{$timestamp}}\",\n  \"password\": \"ReportDemo12345\",\n  \"displayName\": \"报告演示用户\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api", "auth", "register"] },
+            "description": "注册规则：用户名 3~30 字符（字母/数字/下划线/短横线）全局唯一；密码 ≥8 位；昵称可选。成功返回 201 与公开用户信息（不含 passwordHash）。用户名用 {{$timestamp}} 保证重复运行不撞唯一约束。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('返回公开用户信息且不含密码哈希', () => {",
+                  "  pm.expect(body.username).to.include('report_demo_');",
+                  "  pm.expect(body).to.not.have.property('passwordHash');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "登录（学习者 taotao）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"taotao\",\n  \"password\": \"taotao123456\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+            "description": "演示学习者账号（demo:seed 写入，见 README「演示账号」）。成功返回 200 与用户信息，并下发 httpOnly Cookie `xinhuo_session`；测试脚本自动把 token 提取进集合变量 {{session_cookie}}，供后续学习态请求使用。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const setCookie = pm.response.headers.get('set-cookie') || '';",
+                  "const match = setCookie.match(/xinhuo_session=([^;]+)/);",
+                  "pm.test('响应下发 xinhuo_session Cookie', () => pm.expect(match).to.not.eql(null));",
+                  "if (match) pm.collectionVariables.set('session_cookie', match[1]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "我的信息",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{session_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api", "auth", "me"] },
+            "description": "读取当前会话对应的登录用户；未登录返回 401。此处验证 {{session_cookie}} 已被上一请求自动捕获。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('当前用户为演示学习者 taotao', () => {",
+                  "  pm.expect(body.username).to.eql('taotao');",
+                  "  pm.expect(body.role).to.eql('LEARNER');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "技艺条目",
+      "description": "技艺条目（CraftItem）公开展示接口。详情接口响应头携带 X-Cache: HIT | MISS（详情缓存工单 #9），可在 Postman 控制台观察。",
+      "item": [
+        {
+          "name": "条目列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/craft-items?page=1&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "craft-items"],
+              "query": [
+                { "key": "page", "value": "1", "description": "页码，从 1 起" },
+                { "key": "pageSize", "value": "10", "description": "每页条数" }
+              ]
+            },
+            "description": "已发布技艺条目分页列表；支持 ?subcategory=陶瓷 按子类别筛选。脚本自动把首个条目 ID 存入 {{craft_item_id}}、其子类别存入 {{subcategory}}。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('返回列表且总数大于 0', () => {",
+                  "  pm.expect(body.items).to.be.an('array').with.length.above(0);",
+                  "  pm.expect(Number(body.total)).to.be.above(0);",
+                  "});",
+                  "pm.collectionVariables.set('craft_item_id', body.items[0].id);",
+                  "pm.collectionVariables.set('subcategory', body.items[0].subcategory);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "条目列表（按子类别筛选）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/craft-items?subcategory={{subcategory}}&page=1&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "craft-items"],
+              "query": [
+                { "key": "subcategory", "value": "{{subcategory}}", "description": "子类别（来自上一请求捕获，如「陶瓷」）" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            },
+            "description": "按子类别筛选的列表请求，验证筛选语义：返回条目的 subcategory 应全部一致。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const expected = pm.collectionVariables.get('subcategory');",
+                  "pm.test('所有条目 subcategory 一致', () => {",
+                  "  body.items.forEach((item) => pm.expect(item.subcategory).to.eql(expected));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "条目详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/craft-items/{{craft_item_id}}", "host": ["{{base_url}}"], "path": ["api", "craft-items", "{{craft_item_id}}"] },
+            "description": "条目详情：名称/批次/编号/申报地区/历史渊源/工艺特色/图集（含出处 credit）/传承人列表/标签/相关课程。登录用户浏览会记录 VIEW_ITEM 行为事件（游客不记）。响应头 X-Cache: HIT | MISS 暴露缓存路径（404 同样携带）。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "pm.test('携带 X-Cache 响应头', () => pm.expect(pm.response.headers.get('x-cache')).to.be.oneOf(['HIT', 'MISS', 'BYPASS']));",
+                  "const body = pm.response.json();",
+                  "pm.test('详情含传承人与标签字段', () => {",
+                  "  pm.expect(body).to.have.property('inheritors');",
+                  "  pm.expect(body).to.have.property('tags');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "课程与学习进度",
+      "description": "课程浏览（游客）与学习进度（登录学习者，工单 #6）。开始课程与标记完成分别落 START_COURSE / COMPLETE_STEP 行为事件；进度 = 已完成步骤数 / 总步骤数。",
+      "item": [
+        {
+          "name": "课程列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/courses",
+              "host": ["{{base_url}}"],
+              "path": ["api", "courses"],
+              "query": [
+                { "key": "craftItemId", "value": "", "disabled": true, "description": "可选：按技艺条目筛选（条目页「相关课程」共用）" }
+              ]
+            },
+            "description": "已发布课程列表（仅已发布；草稿/待审/驳回不可见）。脚本把首个课程 ID 存入 {{course_id}}。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('已发布课程非空', () => pm.expect(body.items).to.be.an('array').with.length.above(0));",
+                  "pm.collectionVariables.set('course_id', body.items[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "课程详情（登录态）",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{session_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/courses/{{course_id}}", "host": ["{{base_url}}"], "path": ["api", "courses", "{{course_id}}"] },
+            "description": "课程详情：标题/简介/挂载条目/步骤列表。游客仅预览大纲（步骤标题）；登录用户额外获得步骤全文、完成标记（step.completed）与学习进度（progress）。脚本把首步 ID 存入 {{step_id}}。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('步骤列表非空且含完成标记', () => {",
+                  "  pm.expect(body.steps).to.be.an('array').with.length.above(0);",
+                  "  pm.expect(body.steps[0]).to.have.property('completed');",
+                  "});",
+                  "pm.collectionVariables.set('step_id', body.steps[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "开始课程",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{session_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/courses/{{course_id}}/start", "host": ["{{base_url}}"], "path": ["api", "courses", "{{course_id}}", "start"] },
+            "description": "学习者开始课程：记 START_COURSE 事件，每课程每用户仅一次（幂等，重复调用结果一致）。未登录返回 401。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "标记步骤完成",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{session_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/courses/{{course_id}}/steps/{{step_id}}/complete", "host": ["{{base_url}}"], "path": ["api", "courses", "{{course_id}}", "steps", "{{step_id}}", "complete"] },
+            "description": "标记步骤完成：learning_record 以 (userId, stepId) 联合主键幂等落库，首次完成记 COMPLETE_STEP 事件，返回最新进度（completedSteps / totalSteps）。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('返回进度计数', () => {",
+                  "  pm.expect(Number(body.completedSteps)).to.be.at.least(1);",
+                  "  pm.expect(Number(body.totalSteps)).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "我的课程进度",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{session_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/me/courses", "host": ["{{base_url}}"], "path": ["api", "me", "courses"] },
+            "description": "学习者视角每门已开始课程的进度列表（已完成步骤数 / 总步骤数），/me 画像页数据源之一。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "pm.test('返回进度列表', () => pm.expect(pm.response.json().items).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "交流区",
+      "description": "帖子与评论（工单 #7）。列表与详情公开；发帖/评论需登录，分别落 CREATE_POST / CREATE_COMMENT 行为事件。",
+      "item": [
+        {
+          "name": "帖子列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/posts?page=1&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "posts"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            },
+            "description": "交流区帖子列表（公开，仅可见帖，按创建时间倒序），含作者昵称与评论数。脚本把首个帖子 ID 存入 {{post_id}}。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('帖子列表非空', () => pm.expect(body.items).to.be.an('array').with.length.above(0));",
+                  "pm.collectionVariables.set('post_id', body.items[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "帖子详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/posts/{{post_id}}", "host": ["{{base_url}}"], "path": ["api", "posts", "{{post_id}}"] },
+            "description": "帖子详情（公开）：帖子正文与可见评论列表。不存在或已下架一律 404。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('详情含标题与评论数组', () => {",
+                  "  pm.expect(body).to.have.property('title');",
+                  "  pm.expect(body).to.have.property('comments');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "发帖（登录态）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "xinhuo_session={{session_cookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"报告演示：接口连通性验证（{{$timestamp}}）\",\n  \"content\": \"本帖由报告素材包的 Postman 集合自动创建，用于演示发帖接口（写 CREATE_POST 行为事件），随后会被管理端「内容审核」下架。\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/posts", "host": ["{{base_url}}"], "path": ["api", "posts"] },
+            "description": "发帖（仅登录用户）：标题 1~80 字符、正文 1~5000 字符，成功返回 201 与新帖。脚本把新帖 ID 存入 {{created_post_id}}，供管理端「内容审核：下架」演示。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('返回新帖 ID', () => pm.expect(body.id).to.be.a('string'));",
+                  "pm.collectionVariables.set('created_post_id', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "评论帖子（登录态）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "xinhuo_session={{session_cookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"报告演示评论：由 Postman 集合自动发表，用于验证评论接口连通性。\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/posts/{{post_id}}/comments", "host": ["{{base_url}}"], "path": ["api", "posts", "{{post_id}}", "comments"] },
+            "description": "评论帖子（仅登录用户）：正文 1~2000 字符；帖子须存在且可见（否则 404），成功返回 201。写入 CREATE_COMMENT 行为事件。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "个性化推荐",
+      "description": "画像与推荐读取接口（工单 #8）。画像与推荐由离线管道（demo:seed 或管理端手动重建）写入。",
+      "item": [
+        {
+          "name": "我的推荐（登录态）",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{session_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/recommendations", "host": ["{{base_url}}"], "path": ["api", "recommendations"] },
+            "description": "当前学习者的个性化推荐：返回画像标签（如「陶瓷爱好者型」）与条目/课程混合推荐列表（含推荐分与汉字理由，如「同好都在学」）。游客 401；无画像或结果为空时服务端以全站热门兜底。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('返回画像标签与推荐条目', () => {",
+                  "  pm.expect(body).to.have.property('clusterLabel');",
+                  "  pm.expect(body.entries).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "管理端",
+      "description": "管理后台代表接口（需 ADMIN 会话）：条目 CRUD 一例（创建→删除自清理）、内容审核一例（下架演示帖）、画像统计与手动重建。首个请求登录管理员并自动捕获 {{admin_cookie}}，与学习者会话互不干扰。",
+      "item": [
+        {
+          "name": "登录（管理员 admin）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin12345\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+            "description": "演示管理员账号（见 README「演示账号」）。测试脚本把 token 写入 {{admin_cookie}}（独立于学习者会话变量）。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('角色为管理员', () => pm.expect(body.role).to.eql('ADMIN'));",
+                  "const setCookie = pm.response.headers.get('set-cookie') || '';",
+                  "const match = setCookie.match(/xinhuo_session=([^;]+)/);",
+                  "if (match) pm.collectionVariables.set('admin_cookie', match[1]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "条目列表（管理视角）",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{admin_cookie}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/craft-items?page=1&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "craft-items"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "status", "value": "DRAFT", "disabled": true, "description": "可选：按发布状态筛选" },
+                { "key": "q", "value": "", "disabled": true, "description": "可选：名称关键字" }
+              ]
+            },
+            "description": "管理端条目列表：与公开列表不同，可看未发布条目（status 筛选），含标签、传承人数与创建/更新时间。非管理员 403。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('返回列表', () => pm.expect(body.items).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "创建条目（CRUD 一例 · 创建）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "xinhuo_session={{admin_cookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"报告演示示例条目（{{$timestamp}}）\",\n  \"subcategory\": \"陶瓷\",\n  \"batch\": \"第一批（2006 年）\",\n  \"code\": \"Ⅷ-0\",\n  \"region\": \"演示地区\",\n  \"history\": \"用于报告黑盒测试演示的历史渊源文本。\",\n  \"features\": \"用于报告黑盒测试演示的工艺特色文本。\",\n  \"images\": [{ \"url\": \"https://example.com/demo.jpg\", \"credit\": \"演示图，示例来源\" }],\n  \"videoUrl\": null,\n  \"status\": \"PUBLISHED\",\n  \"tagIds\": []\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/admin/craft-items", "host": ["{{base_url}}"], "path": ["api", "admin", "craft-items"] },
+            "description": "创建技艺条目（整体写入：必填文本字段 + 图集数组 {url, credit} + 视频外链 + 发布状态 + 标签关联 tagIds）。默认 PUBLISHED，可显式置为 DRAFT。成功 201 返回完整条目；名称唯一，示例用 {{$timestamp}} 保证可重复运行。脚本把新条目 ID 存入 {{created_item_id}}，由下一请求删除自清理。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('返回新条目 ID', () => pm.expect(body.id).to.be.a('string'));",
+                  "pm.collectionVariables.set('created_item_id', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "删除条目（CRUD 一例 · 删除）",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{admin_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/admin/craft-items/{{created_item_id}}", "host": ["{{base_url}}"], "path": ["api", "admin", "craft-items", "{{created_item_id}}"] },
+            "description": "删除上一请求创建的演示条目（级联清理关联），同时失效详情缓存（invalidateCraftItem）。删除后详情接口 404。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "内容审核一例：下架演示帖",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "xinhuo_session={{admin_cookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"HIDDEN\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/admin/posts/{{created_post_id}}/status", "host": ["{{base_url}}"], "path": ["api", "admin", "posts", "{{created_post_id}}", "status"] },
+            "description": "帖子下架/恢复（内容审核）：status 取 VISIBLE | HIDDEN。下架后前台列表与详情均不可见（详情 404），评论同样按状态过滤。依赖「交流区 → 发帖」先执行（{{created_post_id}}）。评论审核接口同形：PUT /api/admin/comments/:id/status。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "画像统计",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{admin_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/admin/profiles/stats", "host": ["{{base_url}}"], "path": ["api", "admin", "profiles", "stats"] },
+            "description": "画像统计页数据：各簇（K-Means）人数分布与特征均值表，可直接作为报告图表素材（管理端 /admin/profiles 截图对应）。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('画像总数大于 0', () => pm.expect(Number(body.totalProfiles)).to.be.above(0));",
+                  "pm.test('簇分布非空', () => pm.expect(body.clusters).to.be.an('array').with.length.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "画像重建（手动触发）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{admin_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/admin/profiles/rebuild", "host": ["{{base_url}}"], "path": ["api", "admin", "profiles", "rebuild"] },
+            "description": "手动触发画像与推荐整批重建（与每日 cron 共用同一管道入口）：K-Means 聚类 → 画像落库 → 推荐先清后写。返回学习者数、画像数、选定 K 与各簇分布。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('返回画像重建计数', () => {",
+                  "  pm.expect(Number(body.profileCount)).to.be.at.least(1);",
+                  "  pm.expect(Number(body.chosenK)).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "认证收尾",
+      "description": "登出（auth 四端点之一）。因登出会销毁会话，放在集合末尾执行，保证前面的登录态接口全程可用；登出幂等，未登录调用同样返回 200。",
+      "item": [
+        {
+          "name": "登出",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{session_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/auth/logout", "host": ["{{base_url}}"], "path": ["api", "auth", "logout"] },
+            "description": "销毁 Redis 会话并清除 Cookie（幂等）。登出后再调用需登录接口应得到 401——这本身也是一条黑盒用例。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 200', () => pm.response.to.have.status(200));",
+                  "pm.test('返回 ok', () => pm.expect(pm.response.json().ok).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "登出后访问我的信息（预期 401）",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "xinhuo_session={{session_cookie}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api", "auth", "me"] },
+            "description": "负向用例：会话销毁后携带旧 Cookie 访问受保护接口，预期 401「未登录」。"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('状态码 401（会话已失效）', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
