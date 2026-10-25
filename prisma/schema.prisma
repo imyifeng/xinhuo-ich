@@ -1,6 +1,6 @@
 // 薪火数据模型 —— 术语以根目录 GLOSSARY.md 为准
 // T2 新增 user（认证竖切）；T3 新增技艺条目展示竖切（CraftItem 完整展示字段 / Inheritor / Tag / BehaviorEvent）。
-// 后续工单按规格 #1 扩表（course、step、learning_record 等）。
+// T5 新增课程与学习进度竖切（Course / Step / LearningRecord）。
 
 generator client {
   provider = "prisma-client"
@@ -52,6 +52,10 @@ model User {
   createdAt   DateTime @default(now()) @map("created_at")
 
   behaviorEvents BehaviorEvent[]
+  /// 传承人账号发布的课程（作者）
+  courses Course[]
+  /// 学习进度记录（已完成步骤）
+  learningRecords LearningRecord[]
 
   @@map("user")
 }
@@ -82,6 +86,8 @@ model CraftItem {
 
   inheritors Inheritor[]
   tags CraftItemTag[]
+  /// 挂在本条目下的课程
+  courses Course[]
 
   @@index([status, subcategory])
   @@map("craft_item")
@@ -126,6 +132,14 @@ model CraftItemTag {
   @@map("craft_item_tag")
 }
 
+/// 课程发布状态：草稿 → 提交审核 → 管理员发布或驳回（工单 #6）
+enum CourseStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+}
+
 /// 学习行为事件 —— 画像的原始数据（仅登录用户），多态目标：targetType + targetId
 model BehaviorEvent {
   id String @id @default(cuid())
@@ -143,4 +157,66 @@ model BehaviorEvent {
   @@index([userId, type])
   @@index([type, targetId])
   @@map("behavior_event")
+}
+
+/// 课程 —— 某个技艺条目下的结构化图文教程，由传承人（或管理员）账号创建并维护（工单 #6）
+model Course {
+  id String @id @default(cuid())
+  /// 课程标题
+  title String
+  /// 课程简介
+  intro String
+  /// 挂载的技艺条目
+  craftItemId String @map("craft_item_id")
+  /// 作者（传承人账号，管理员代建时为其本人）
+  authorId Int @map("author_id")
+  status CourseStatus @default(DRAFT)
+  /// 驳回理由（管理员驳回时可附，传承人可见；重新提交时清空）
+  rejectReason String? @map("reject_reason")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  craftItem CraftItem @relation(fields: [craftItemId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  steps Step[]
+
+  @@index([craftItemId, status])
+  @@index([authorId])
+  @@map("course")
+}
+
+/// 步骤 —— 课程的最小学习单元，对应一道工序或一个知识点（工单 #6）
+model Step {
+  id String @id @default(cuid())
+  courseId String @map("course_id")
+  /// 同课程内从 1 递增的排序（唯一约束保证不重不漏）
+  order Int
+  /// 步骤标题
+  title String
+  /// 图文内容
+  content String
+  /// 可选配图地址
+  imageUrl String? @map("image_url")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  learningRecords LearningRecord[]
+
+  @@unique([courseId, order])
+  @@map("step")
+}
+
+/// 学习进度记录 —— 学习者已完成步骤（工单 #6）。
+/// userId + stepId 联合主键天然幂等：重复标记完成不会产生重复记录；
+/// 学习进度 = 某课程下 learning_record 数 / 该课程总步骤数。
+model LearningRecord {
+  userId Int @map("user_id")
+  stepId String @map("step_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step Step @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@id([userId, stepId])
+  @@index([stepId])
+  @@map("learning_record")
 }
