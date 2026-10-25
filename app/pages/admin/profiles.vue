@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * 画像统计（管理端，工单 #8）：各簇人数分布 + 特征均值表 + 手动触发重建。
+ * 画像统计（管理端，工单 #8 / 用户故事 26）：平台用户数与学习行为量卡片
+ * + 各簇人数分布 + 特征均值表 + 手动触发重建。
  * 特征均值表是实践报告 5.1 的核心素材：展示每个簇在各特征维度上的均值，
  * 可解释"这一簇为什么被命名为 XX爱好者型"。
  */
@@ -14,6 +15,16 @@ interface ClusterFeatureMean {
 }
 
 interface ProfileStats {
+  /** 用户总数，按角色分（GLOSSARY：学习者/传承人/管理员，用户故事 26） */
+  users: {
+    total: number
+    byRole: { LEARNER: number, INHERITOR: number, ADMIN: number }
+  }
+  /** 学习行为总量：五类事件按类型计数（用户故事 26/27） */
+  behavior: {
+    total: number
+    byType: { VIEW_ITEM: number, START_COURSE: number, COMPLETE_STEP: number, CREATE_POST: number, CREATE_COMMENT: number }
+  }
   totalProfiles: number
   clusters: Array<{
     clusterIndex: number
@@ -92,6 +103,49 @@ onMounted(loadStats)
       <el-button type="primary" :loading="rebuilding" @click="onRebuild">
         {{ rebuilding ? '重建中…' : '手动触发重建' }}
       </el-button>
+    </div>
+
+    <!-- 平台统计（用户故事 26）：用户数与行为量卡片，与簇分布同屏 -->
+    <div>
+      <h2 class="mb-3 text-base font-semibold">平台用户</h2>
+      <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <el-card shadow="never">
+          <el-statistic title="用户总数" :value="stats?.users?.total ?? 0" />
+        </el-card>
+        <el-card shadow="never">
+          <el-statistic title="学习者（LEARNER）" :value="stats?.users?.byRole?.LEARNER ?? 0" />
+        </el-card>
+        <el-card shadow="never">
+          <el-statistic title="传承人（INHERITOR）" :value="stats?.users?.byRole?.INHERITOR ?? 0" />
+        </el-card>
+        <el-card shadow="never">
+          <el-statistic title="管理员（ADMIN）" :value="stats?.users?.byRole?.ADMIN ?? 0" />
+        </el-card>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="mb-3 text-base font-semibold">学习行为量</h2>
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+        <el-card shadow="never">
+          <el-statistic title="行为总量" :value="stats?.behavior?.total ?? 0" />
+        </el-card>
+        <el-card shadow="never">
+          <el-statistic title="浏览条目" :value="stats?.behavior?.byType?.VIEW_ITEM ?? 0" />
+        </el-card>
+        <el-card shadow="never">
+          <el-statistic title="开始课程" :value="stats?.behavior?.byType?.START_COURSE ?? 0" />
+        </el-card>
+        <el-card shadow="never">
+          <el-statistic title="完成步骤" :value="stats?.behavior?.byType?.COMPLETE_STEP ?? 0" />
+        </el-card>
+        <el-card shadow="never">
+          <el-statistic title="发帖" :value="stats?.behavior?.byType?.CREATE_POST ?? 0" />
+        </el-card>
+        <el-card shadow="never">
+          <el-statistic title="评论" :value="stats?.behavior?.byType?.CREATE_COMMENT ?? 0" />
+        </el-card>
+      </div>
     </div>
 
     <!-- 概览卡片：画像总数 / 簇数 -->
