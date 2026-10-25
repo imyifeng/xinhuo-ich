@@ -1,21 +1,16 @@
 import type { CourseStatus, Prisma, Role } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
 import { COURSE_TARGET_TYPE } from './behavior-event.service'
+import { BusinessError as CourseError } from './errors'
 import { isRecordNotFound } from './admin-error'
 
 /**
  * 课程业务层（工单 #6）：传承人创作端 + 公开浏览 + 学习进度的共享底层。
  * 管理端审核（发布/驳回）见 admin-course.service.ts。
- * 错误契约：CourseError 携带语义化 HTTP 状态码，由接入层包装器映射为 { error } 响应体。
+ * 错误契约：CourseError 为共享 BusinessError 的课程域别名（携带语义化 HTTP 状态码），
+ * 由接入层包装器映射为 { error } 响应体。
  */
-export class CourseError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-  ) {
-    super(message)
-  }
-}
+export { CourseError }
 
 /** 仅草稿与已驳回课程可编辑/删除（待审核与已发布需走审核流程，防止绕过审查改动内容） */
 const EDITABLE_STATUSES = new Set<CourseStatus>(['DRAFT', 'REJECTED'])

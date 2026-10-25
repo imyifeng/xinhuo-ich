@@ -1,6 +1,7 @@
 import { hash, verify } from '@node-rs/argon2'
 import type { Role, User } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
+import { BusinessError as AuthError } from './errors'
 
 /**
  * 认证业务层：注册 / 登录校验 / 会话签发（会话写入委托 session.ts 共享契约）。
@@ -22,15 +23,8 @@ export interface PublicUser {
   createdAt: string
 }
 
-/** 带语义状态码的业务错误，由接入层映射为 HTTP 响应 */
-export class AuthError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-  ) {
-    super(message)
-  }
-}
+/** 带语义状态码的业务错误（共享 BusinessError 的认证域别名），由接入层映射为 HTTP 响应 */
+export { AuthError }
 
 export function toPublicUser(user: User): PublicUser {
   return {

@@ -1,7 +1,7 @@
 import type { Prisma } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
 import { recordBehaviorEvent } from './behavior-event.service'
-import { AuthError } from './auth.service'
+import { BusinessError } from './errors'
 
 /**
  * 交流区业务层（工单 #7 / 用户故事 7~9、24）：帖子与评论的公开浏览与登录写入。
@@ -154,10 +154,10 @@ export async function createPost(authorId: number, input: unknown): Promise<Post
   const content = normalizedString(body.content)
 
   if (!title || title.length > POST_TITLE_MAX_LENGTH) {
-    throw new AuthError(400, `标题需为 1~${POST_TITLE_MAX_LENGTH} 个字符`)
+    throw new BusinessError(400, `标题需为 1~${POST_TITLE_MAX_LENGTH} 个字符`)
   }
   if (!content || content.length > POST_CONTENT_MAX_LENGTH) {
-    throw new AuthError(400, `正文需为 1~${POST_CONTENT_MAX_LENGTH} 个字符`)
+    throw new BusinessError(400, `正文需为 1~${POST_CONTENT_MAX_LENGTH} 个字符`)
   }
 
   const db = usePrisma()
@@ -195,13 +195,13 @@ export async function createComment(postId: string, authorId: number, input: unk
   const body = (typeof input === 'object' && input !== null ? input : {}) as Record<string, unknown>
   const content = normalizedString(body.content)
   if (!content || content.length > COMMENT_CONTENT_MAX_LENGTH) {
-    throw new AuthError(400, `评论内容需为 1~${COMMENT_CONTENT_MAX_LENGTH} 个字符`)
+    throw new BusinessError(400, `评论内容需为 1~${COMMENT_CONTENT_MAX_LENGTH} 个字符`)
   }
 
   const db = usePrisma()
   const post = await db.post.findUnique({ where: { id: postId }, select: { id: true, status: true } })
   if (!post || post.status !== 'VISIBLE') {
-    throw new AuthError(404, '帖子不存在或已下架')
+    throw new BusinessError(404, '帖子不存在或已下架')
   }
 
   const created = await db.comment.create({

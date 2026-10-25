@@ -1,15 +1,11 @@
+import { BusinessError } from './errors'
+
 /**
  * 管理端业务错误与 Prisma 约束错误判别（工单 #5）。
- * AdminError 携带语义化 HTTP 状态码，由 server/utils/admin.ts 统一映射为响应。
+ * AdminError 为共享 BusinessError 的管理端别名（400/404/409 语义由构造处决定），
+ * 由 server/utils/admin.ts 统一映射为响应。
  */
-export class AdminError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-  ) {
-    super(message)
-  }
-}
+export { BusinessError as AdminError }
 
 /** Prisma 唯一约束冲突（P2002） */
 export function isUniqueViolation(error: unknown): boolean {
