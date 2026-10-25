@@ -1,5 +1,7 @@
 # 开发环境：仅基础设施（PostgreSQL + Redis），应用在宿主机热载（pnpm dev）—— 见 ADR 0002
 # 用法：docker compose -f compose.dev.yaml up -d
+name: xinhuo-dev
+
 services:
   postgres:
     image: postgres:18.2-alpine
