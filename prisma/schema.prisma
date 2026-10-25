@@ -1,5 +1,5 @@
 // 薪火数据模型 —— 术语以根目录 GLOSSARY.md 为准
-// T1 仅含支撑首页计数演示的最小模型；后续工单按规格 #1 扩表（user、course、step 等）。
+// T2 新增 user（认证竖切）；后续工单按规格 #1 扩表（course、step、learning_record 等）。
 
 generator client {
   provider = "prisma-client"
@@ -9,6 +9,28 @@ generator client {
 // Prisma 7：连接 URL 不再写在 schema 里，CLI 走 prisma.config.ts，客户端走 driver adapter
 datasource db {
   provider = "postgresql"
+}
+
+/// 平台角色：学习者 / 传承人 / 管理员（传承人由管理员线下核实后标记，无线上自助认证）
+enum Role {
+  LEARNER
+  INHERITOR
+  ADMIN
+}
+
+/// 账号 —— 学习者、传承人与管理员的登录主体（自实现认证：argon2 哈希 + Redis 会话）
+model User {
+  id          Int      @id @default(autoincrement())
+  /// 登录用户名，全局唯一（3~30 字符）
+  username    String   @unique
+  /// 对外展示的昵称
+  displayName String   @map("display_name")
+  /// argon2 哈希，永不出库（见规格 #1 Implementation Decisions）
+  passwordHash String  @map("password_hash")
+  role        Role     @default(LEARNER)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("user")
 }
 
 /// 技艺条目 —— 平台内容的基本单元，对应传统技艺类非遗代表性名录中的一项
