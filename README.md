@@ -76,6 +76,19 @@ pnpm test
 - 测试库连接串经 `TEST_DATABASE_URL` 注入（见 `.env.example`），`DATABASE_URL` 在测试运行期间被指向测试库，应用代码无需感知。
 - 测试只断言外部行为（请求进 → 响应出），数据库状态通过 Prisma 作为夹具准备，符合规格 #1 的接缝 1 约定。
 
+## 报告素材包（docs/report-assets/）
+
+写课程实践报告（第 4/5/6 章）直接取用的素材集合，索引与按章节取用指南见
+[docs/report-assets/README.md](docs/report-assets/README.md)：
+
+| 素材 | 位置 | 对应报告章节 |
+| --- | --- | --- |
+| Postman 接口集合（27 请求 / 52 断言，newman 全绿） | `docs/report-assets/postman/` | 第 6 章 · 接口测试 |
+| 测试用例及结果汇总（27 文件 / 172 用例全通过） | `docs/report-assets/testing/` | 第 6 章 · 测试用例及结果 |
+| 压测结果整理（引用表 + 结论段 + 开/关缓存对比图） | `docs/report-assets/perf/`（原始数据在 `docs/perf/`） | 第 6 章 · 性能测试 |
+| 界面截图 17 张（对应 5.1 章图位清单） | `docs/report-assets/screenshots/` | 5.1 章界面展示 |
+| ER 图（mermaid 源码 + SVG/PNG）与数据字典（4.6.1/4.6.2） | `docs/report-assets/database/` | 4.6 章数据库设计 |
+
 ## 生产部署（宿主机 Caddy 反代 · runbook）
 
 架构（ADR 0002）：compose 只含 app（多阶段构建镜像）+ postgres + redis 三个服务，应用暴露宿主机 `${APP_PORT}`，由宿主机**既有** Caddy 反代并承担 HTTPS；compose 内不含反向代理，postgres/redis 也不映射宿主机端口，仅容器网络内可达。
