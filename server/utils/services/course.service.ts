@@ -406,3 +406,142 @@ export async function reorderCourseSteps(
   })
   return loadCourseDetail(courseId)
 }
+
+// ---- 公开浏览（学习者/游客，工单 #6）----
+
+export interface PublicCourseSummary {
+  id: string
+  title: string
+  intro: string
+  craftItemId: string
+  craftItemName: string
+  subcategory: string
+  stepCount: number
+  createdAt: string
+}
+
+/** 已发布课程列表（前台）：可按技艺条目筛选，最新在前（首页/条目页「相关课程」共用） */
+export async function listPublishedCourses(query: { craftItemId?: string } = {}): Promise<{ items: PublicCourseSummary[] }> {
+  const craftItemId = query.craftItemId?.trim()
+  const rows = await usePrisma().course.findMany({
+    where: {
+      status: 'PUBLISHED',
+      ...(craftItemId ? { craftItemId } : {}),
+    },
+    include: { craftItem: { select: { name: true, subcategory: true } }, _count: { select: { steps: true } } },
+    orderBy: [{ createdAt: 'desc' as const }, { id: 'asc' as const }],
+  })
+  return {
+    items: rows.map(row => ({
+      id: row.id,
+      title: row.title,
+      intro: row.intro,
+      craftItemId: row.craftItemId,
+      craftItemName: row.craftItem.name,
+      subcategory: row.craftItem.subcategory,
+      stepCount: row._count.steps,
+      createdAt: row.createdAt.toISOString(),
+    })),
+  }
+}
+
+export interface PublicCourseStep {
+  id: string
+  order: number
+  title: string
+  /** 游客仅预览大纲（用户故事 4），content 为 null；登录后返回全文 */
+  content: string | null
+  imageUrl: string | null
+  /** 仅登录用户返回：该步骤是否已完成 */
+  completed?: boolean
+}
+
+export interface CourseProgress {
+  completedSteps: number
+  totalSteps: number
+}
+
+export interface PublicCourseDetail {
+  id: string
+  title: string
+  intro: string
+  craftItem: { id: string, name: string, subcategory: string }
+  steps: PublicCourseStep[]
+  /** 仅登录用户返回学习进度（GLOSSARY：已完成步骤占比的分子分母） */
+  progress: CourseProgress | null
+}
+
+/** 已发布课程详情：游客见大纲（无 content / progress），登录用户见全文与进度 */
+export async function getPublishedCourseDetail(courseId: string, viewerUserId?: number | null): Promise<PublicCourseDetail | null> {
+  const loggedIn = viewerUserId != null
+  const row = await usePrisma().course.findUnique({
+    where: { id: courseId },
+    include: {
+      craftItem: { select: { id: true, name: true, subcategory: true } },
+      steps: {
+        orderBy: { order: 'asc' as const },
+        include: { learningRecords: { where: { userId: viewerUserId ?? -1 }, select: { stepId: true } } },
+      },
+    },
+  })
+  if (!row || row.status !== 'PUBLISHED') return null
+
+  const completedSteps = loggedIn ? row.steps.filter(s => s.learningRecords.length > 0).length : 0
+  return {
+    id: row.id,
+    title: row.title,
+    intro: row.intro,
+    craftItem: row.craftItem,
+    steps: row.steps.map(step => ({
+      id: step.id,
+      order: step.order,
+      title: step.title,
+      content: loggedIn ? step.content : null,
+      imageUrl: step.imageUrl,
+      ...(loggedIn ? { completed: step.learningRecords.length > 0 } : {}),
+    })),
+    progress: loggedIn ? { completedSteps, totalSteps: row.steps.length } : null,
+  }
+}
+
+/** 我的课程进度（学习者端）：有完成记录的已发布课程，按最近完成时间倒序 */
+export async function listMyCourseProgress(userId: number): Promise<{ items: Array<MyCourseProgress> }> {
+  const rows = await usePrisma().course.findMany({
+    where: {
+      status: 'PUBLISHED',
+      steps: { some: { learningRecords: { some: { userId } } } },
+    },
+    include: {
+      craftItem: { select: { name: true } },
+      steps: { select: { learningRecords: { where: { userId }, select: { completedAt: true } } } },
+    },
+  })
+
+  const items = rows.map((row) => {
+    const completed = row.steps.filter(s => s.learningRecords.length > 0)
+    const lastCompletedAt = completed
+      .flatMap(s => s.learningRecords.map(r => r.completedAt))
+      .sort((a, b) => b.getTime() - a.getTime())[0]
+    return {
+      courseId: row.id,
+      title: row.title,
+      craftItemId: row.craftItemId,
+      craftItemName: row.craftItem.name,
+      completedSteps: completed.length,
+      totalSteps: row.steps.length,
+      lastCompletedAt: lastCompletedAt ? lastCompletedAt.toISOString() : null,
+    }
+  }).sort((a, b) => (b.lastCompletedAt ?? '').localeCompare(a.lastCompletedAt ?? ''))
+
+  return { items }
+}
+
+export interface MyCourseProgress {
+  courseId: string
+  title: string
+  craftItemId: string
+  craftItemName: string
+  completedSteps: number
+  totalSteps: number
+  lastCompletedAt: string | null
+}
