@@ -36,7 +36,7 @@ pnpm db:seed      # 写入演示用技艺条目
 pnpm dev          # http://localhost:3000
 ```
 
-打开 http://localhost:3000：首页展示品牌与来自数据库的实时统计（技艺条目数 / 覆盖子类别数）；`GET /api/health` 返回数据库与 Redis 连通状态。
+打开 http://localhost:3000：首页展示品牌与来自数据库的实时统计（技艺条目数 / 覆盖子类别数）；`GET /api/health` 返回数据库与 Redis 连通状态及详情缓存统计（命中/未命中计数）。技艺条目详情接口带 cache-aside 缓存（`X-Cache: HIT | MISS | BYPASS` 响应头），实现见 `server/utils/services/cache.service.ts`。
 
 ## 测试
 
@@ -69,6 +69,7 @@ docker compose up -d --build
 | `DATABASE_URL` | 应用连接的 PostgreSQL（开发指向宿主机映射端口） | `postgresql://xinhuo:xinhuo@localhost:5433/xinhuo` |
 | `TEST_DATABASE_URL` | 集成测试专用库（每次 `pnpm test` 强制重置） | `postgresql://xinhuo:xinhuo@localhost:5433/xinhuo_test` |
 | `REDIS_URL` | Redis 连接串 | `redis://localhost:6380` |
+| `CACHE_ENABLED` | 详情缓存开关（默认开；`false`/`0` 关闭用于压测对比，`X-Cache: BYPASS`） | `true` |
 | `POSTGRES_PORT` / `REDIS_PORT` | compose 映射到宿主机的端口 | `5433` / `6380` |
 | `APP_PORT` | 生产 app 暴露的宿主机端口（Caddy 指向此处） | `3000` |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | PostgreSQL 容器初始化 | `xinhuo` / `xinhuo` / `xinhuo` |

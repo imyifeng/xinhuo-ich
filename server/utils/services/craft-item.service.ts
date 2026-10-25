@@ -1,5 +1,7 @@
 import type { Prisma } from '../../generated/prisma/client'
 import { usePrisma } from '../prisma'
+import { useRedis } from '../redis'
+import { cacheAside, type CacheOutcome } from './cache.service'
 import { recordBehaviorEvent } from './behavior-event.service'
 
 /** 列表页默认与上限：无翻页器时每页 12 条，防大分页拖垮查询 */
@@ -127,9 +129,52 @@ export interface CraftItemDetail {
   inheritors: InheritorView[]
 }
 
-/** 技艺条目详情：不存在或未发布返回 null（由接入层转 404）；
- *  viewerUserId 为登录用户时记录一条 VIEW_ITEM 事件，游客（null）不记 */
-export async function getCraftItemDetail(id: string, viewerUserId?: number | null): Promise<CraftItemDetail | null> {
+/** 详情缓存 TTL：命中 60s 基础（写入时由缓存层附加随机抖动防雪崩）；
+ *  空值 10s（防穿透：不存在的条目 ID 短期内不再回源，条目新建后最多 10s 可见） */
+export const CRAFT_ITEM_DETAIL_TTL_MS = 60_000
+export const CRAFT_ITEM_DETAIL_NULL_TTL_MS = 10_000
+
+/** 详情缓存键（管理端失效与测试辅助均复用此命名） */
+export function craftItemDetailCacheKey(id: string): string {
+  return `cache:craft-item:detail:${id}`
+}
+
+/** 数据变更失效（cache-aside 写路径）：管理端更新/删除条目后调用，清除详情缓存键。
+ *  失效失败仅记日志不抛出——缓存不一致可由短 TTL 兜底，不应拖垮管理端写入。
+ *  接线说明：admin API 由 T4 并行开发，合入后在条目更新/删除写路径调用本函数。 */
+export async function invalidateCraftItem(id: string): Promise<void> {
+  try {
+    await useRedis().del(craftItemDetailCacheKey(id))
+  }
+  catch (err) {
+    console.error('[cache] 清除技艺条目详情缓存失败', id, err instanceof Error ? err.message : err)
+  }
+}
+
+export interface CraftItemDetailResult {
+  detail: CraftItemDetail | null
+  /** 缓存路径结果，供接入层设置 X-Cache 响应头（HIT | MISS | BYPASS） */
+  cache: CacheOutcome
+}
+
+/** 技艺条目详情（cache-aside）：不存在或未发布返回 null（由接入层转 404）；
+ *  viewerUserId 为登录用户时记录一条 VIEW_ITEM 事件，游客（null）不记。
+ *  事件记录在缓存之外逐请求执行：缓存命中也照常落事件，浏览行为不因缓存丢失。 */
+export async function getCraftItemDetail(id: string, viewerUserId?: number | null): Promise<CraftItemDetailResult> {
+  const { value, outcome } = await cacheAside<CraftItemDetail>({
+    key: craftItemDetailCacheKey(id),
+    ttlMs: CRAFT_ITEM_DETAIL_TTL_MS,
+    nullTtlMs: CRAFT_ITEM_DETAIL_NULL_TTL_MS,
+    loader: () => loadCraftItemDetail(id),
+  })
+  if (value && viewerUserId != null) {
+    await recordBehaviorEvent({ userId: viewerUserId, type: 'VIEW_ITEM', targetType: 'CRAFT_ITEM', targetId: value.id })
+  }
+  return { detail: value, cache: outcome }
+}
+
+/** 纯数据访问：详情查询与展示字段组装（无副作用，缓存回源的目标函数） */
+async function loadCraftItemDetail(id: string): Promise<CraftItemDetail | null> {
   const db = usePrisma()
   const row = await db.craftItem.findUnique({
     where: { id },
@@ -139,10 +184,6 @@ export async function getCraftItemDetail(id: string, viewerUserId?: number | nul
     },
   })
   if (!row || row.status !== 'PUBLISHED') return null
-
-  if (viewerUserId != null) {
-    await recordBehaviorEvent({ userId: viewerUserId, type: 'VIEW_ITEM', targetType: 'CRAFT_ITEM', targetId: row.id })
-  }
 
   return {
     id: row.id,
