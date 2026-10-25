@@ -51,7 +51,9 @@ async function onLogout() {
         <!-- auth-area -->
         <span class="mx-1 h-4 w-px bg-stone-200" aria-hidden="true" />
         <template v-if="user">
-          <span class="text-stone-700">你好，{{ user.displayName }}</span>
+          <NuxtLink to="/me" class="text-stone-700 transition hover:text-orange-600">
+            你好，{{ user.displayName }}
+          </NuxtLink>
           <!-- 传承人创作入口（工单 #6）：课程创作工作台，管理员亦可进入 -->
           <NuxtLink
             v-if="user.role === 'INHERITOR' || user.role === 'ADMIN'"

@@ -39,6 +39,7 @@ async function onLogout() {
           <el-menu-item index="tags" route="/admin/tags">标签</el-menu-item>
           <el-menu-item index="users" route="/admin/users">账号</el-menu-item>
           <el-menu-item index="moderation" route="/admin/moderation">内容审核</el-menu-item>
+          <el-menu-item index="profiles" route="/admin/profiles">画像统计</el-menu-item>
         </el-menu>
       </aside>
 

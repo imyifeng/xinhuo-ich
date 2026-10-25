@@ -22,6 +22,23 @@ if (error.value || !item.value) {
   throw createError({ statusCode: 404, statusMessage: '技艺条目不存在', fatal: true })
 }
 
+// 为你推荐（工单 #8）：登录学习者返回画像驱动的个性化结果，游客 401 → null → 区块不渲染
+interface RecommendationFeed {
+  clusterLabel: string | null
+  entries: Array<{
+    type: 'CRAFT_ITEM' | 'COURSE'
+    craftItemId: string | null
+    courseId: string | null
+    title: string
+    subtitle: string
+    image: { url: string, credit: string } | null
+    reason: string
+  }>
+}
+const { data: feed } = await useFetch<RecommendationFeed | null>('/api/recommendations', {
+  default: () => null,
+})
+
 // 相关课程（工单 #6）：本条目下已发布的课程，引导学习者进入学习竖切
 interface CourseSummary {
   id: string
@@ -170,6 +187,11 @@ useHead({ title: `${item.value.name} · 薪火`, htmlAttrs: { lang: 'zh-CN' } })
         </p>
       </aside>
     </div>
+
+    <!-- 为你推荐（工单 #8）：仅登录学习者可见 -->
+    <section v-if="feed" class="mt-12 border-t border-stone-200 pt-10">
+      <RecommendationSection :feed="feed" />
+    </section>
 
     <div class="mt-12 border-t border-stone-200 pt-6">
       <NuxtLink to="/craft-items" class="text-sm text-orange-600 hover:text-orange-700">← 返回技艺条目列表</NuxtLink>

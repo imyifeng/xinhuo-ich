@@ -14,12 +14,30 @@ interface CraftListItem {
   tags: string[]
 }
 
+interface RecommendationFeed {
+  clusterLabel: string | null
+  entries: Array<{
+    type: 'CRAFT_ITEM' | 'COURSE'
+    craftItemId: string | null
+    courseId: string | null
+    title: string
+    subtitle: string
+    image: { url: string, credit: string } | null
+    reason: string
+  }>
+}
+
 // 首页统计：SSR 阶段从 /api/stats 读取数据库计数（接入 → 业务 → 数据 三层贯通的可见证明）
 const { data: stats } = await useFetch<PlatformStats>('/api/stats')
 
 // 精选技艺条目：取最近收录的 6 条已发布条目
 const { data: featured } = await useFetch<{ items: CraftListItem[] }>('/api/craft-items', {
   query: { pageSize: 6 },
+})
+
+// 为你推荐（工单 #8）：登录学习者返回画像驱动的个性化结果，游客 401 → data 为 null → 区块不渲染
+const { data: feed } = await useFetch<RecommendationFeed | null>('/api/recommendations', {
+  default: () => null,
 })
 
 useHead({
@@ -64,6 +82,11 @@ useHead({
           <p class="mt-2 text-sm text-stone-500">覆盖子类别</p>
         </div>
       </div>
+    </section>
+
+    <!-- 为你推荐（工单 #8）：仅登录学习者可见（个性化画像驱动），游客不渲染 -->
+    <section v-if="feed" class="mx-auto max-w-5xl px-6 py-14">
+      <RecommendationSection :feed="feed" />
     </section>
 
     <section class="mx-auto max-w-5xl px-6 pb-16">
