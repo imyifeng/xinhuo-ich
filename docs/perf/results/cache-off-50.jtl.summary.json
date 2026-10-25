@@ -1,0 +1,16 @@
+{
+  "file": "results/cache-off-50.jtl",
+  "samples": 142652,
+  "windowSeconds": 59.9,
+  "throughputRps": 2379.9,
+  "errorRatePct": 0,
+  "meanMs": 20.1,
+  "p50Ms": 20,
+  "p90Ms": 25,
+  "p95Ms": 27,
+  "p99Ms": 33,
+  "maxMs": 57,
+  "responseCodes": {
+    "200": 142652
+  }
+}

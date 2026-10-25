@@ -1,0 +1,213 @@
+2026-10-25 06:07:10,923 INFO o.a.j.u.JMeterUtils: Setting Locale to en_EN
+2026-10-25 06:07:10,936 INFO o.a.j.JMeter: Loading user properties from: /opt/apache-jmeter-5.5/bin/user.properties
+2026-10-25 06:07:10,936 INFO o.a.j.JMeter: Loading system properties from: /opt/apache-jmeter-5.5/bin/system.properties
+2026-10-25 06:07:10,937 INFO o.a.j.JMeter: Setting System property: log4j2.formatMsgNoLookups=true
+2026-10-25 06:07:10,937 INFO o.a.j.JMeter: Setting JMeter property: threads=50
+2026-10-25 06:07:10,937 INFO o.a.j.JMeter: Setting JMeter property: rampup=5
+2026-10-25 06:07:10,937 INFO o.a.j.JMeter: Setting JMeter property: duration=60
+2026-10-25 06:07:10,937 INFO o.a.j.JMeter: Setting JMeter property: itemId=cmvnceqeq0000bj59x6vrt0la
+2026-10-25 06:07:10,937 INFO o.a.j.JMeter: Setting JMeter property: port=3737
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: Copyright (c) 1998-2022 The Apache Software Foundation
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: Version 5.5
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: java.version=1.8.0_275
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: java.vm.name=OpenJDK 64-Bit Server VM
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: os.name=Linux
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: os.arch=amd64
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: os.version=7.3.0-5-cachyos
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: file.encoding=UTF-8
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: java.awt.headless=true
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: Max memory     =19587399680
+2026-10-25 06:07:10,942 INFO o.a.j.JMeter: Available Processors =16
+2026-10-25 06:07:10,946 INFO o.a.j.JMeter: Default Locale=English (EN)
+2026-10-25 06:07:10,947 INFO o.a.j.JMeter: JMeter  Locale=English (EN)
+2026-10-25 06:07:10,947 INFO o.a.j.JMeter: JMeterHome=/opt/apache-jmeter-5.5
+2026-10-25 06:07:10,947 INFO o.a.j.JMeter: user.dir  =/perf
+2026-10-25 06:07:10,947 INFO o.a.j.JMeter: PWD       =/perf
+2026-10-25 06:07:10,947 INFO o.a.j.JMeter: IP: 127.0.1.1 Name: helium-cachyos FullName: helium-cachyos
+2026-10-25 06:07:10,964 INFO o.a.j.s.FileServer: Default base='/perf'
+2026-10-25 06:07:10,965 INFO o.a.j.s.FileServer: Set new base='/perf'
+2026-10-25 06:07:11,054 INFO o.a.j.s.SaveService: Testplan (JMX) version: 2.2. Testlog (JTL) version: 2.2
+2026-10-25 06:07:11,070 INFO o.a.j.s.SaveService: Using SaveService properties file encoding UTF-8
+2026-10-25 06:07:11,074 INFO o.a.j.s.SaveService: Using SaveService properties version 5.0
+2026-10-25 06:07:11,079 INFO o.a.j.s.SaveService: Loading file: /perf/craft-item-detail.jmx
+2026-10-25 06:07:11,117 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for text/html is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser
+2026-10-25 06:07:11,117 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for application/xhtml+xml is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser
+2026-10-25 06:07:11,117 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for application/xml is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser
+2026-10-25 06:07:11,117 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for text/xml is org.apache.jmeter.protocol.http.parser.LagartoBasedHtmlParser
+2026-10-25 06:07:11,117 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for text/vnd.wap.wml is org.apache.jmeter.protocol.http.parser.RegexpHTMLParser
+2026-10-25 06:07:11,117 INFO o.a.j.p.h.s.HTTPSamplerBase: Parser for text/css is org.apache.jmeter.protocol.http.parser.CssParser
+2026-10-25 06:07:11,310 INFO o.a.j.JMeter: Creating summariser <summary>
+2026-10-25 06:07:11,324 INFO o.a.j.e.StandardJMeterEngine: Running the test!
+2026-10-25 06:07:11,325 INFO o.a.j.s.SampleEvent: List of sample_variables: []
+2026-10-25 06:07:11,325 INFO o.a.j.s.SampleEvent: List of sample_variables: []
+2026-10-25 06:07:11,331 INFO o.a.j.e.u.CompoundVariable: Note: Function class names must contain the string: '.functions.'
+2026-10-25 06:07:11,331 INFO o.a.j.e.u.CompoundVariable: Note: Function class names must not contain the string: '.gui.'
+2026-10-25 06:07:11,514 INFO o.a.j.JMeter: Running test (1792904831514)
+2026-10-25 06:07:11,574 INFO o.a.j.e.StandardJMeterEngine: Starting ThreadGroup: 1 : 详情接口梯度压测
+2026-10-25 06:07:11,574 INFO o.a.j.e.StandardJMeterEngine: Starting 50 threads for group 详情接口梯度压测.
+2026-10-25 06:07:11,574 INFO o.a.j.e.StandardJMeterEngine: Thread will continue on error
+2026-10-25 06:07:11,574 INFO o.a.j.t.ThreadGroup: Starting thread group... number=1 threads=50 ramp-up=5 delayedStart=false
+2026-10-25 06:07:11,579 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-1
+2026-10-25 06:07:11,589 INFO o.a.j.t.ThreadGroup: Started thread group number 1
+2026-10-25 06:07:11,589 INFO o.a.j.e.StandardJMeterEngine: All thread groups have been started
+2026-10-25 06:07:11,594 INFO o.a.j.p.h.s.HTTPHCAbstractImpl: Local host = helium-cachyos
+2026-10-25 06:07:11,600 INFO o.a.j.p.h.s.HTTPHC4Impl: HTTP request retry count = 0
+2026-10-25 06:07:11,601 INFO o.a.j.s.SampleResult: Note: Sample TimeStamps are START times
+2026-10-25 06:07:11,601 INFO o.a.j.s.SampleResult: sampleresult.default.encoding is set to ISO-8859-1
+2026-10-25 06:07:11,601 INFO o.a.j.s.SampleResult: sampleresult.useNanoTime=true
+2026-10-25 06:07:11,601 INFO o.a.j.s.SampleResult: sampleresult.nanoThreadSleep=5000
+2026-10-25 06:07:11,676 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-2
+2026-10-25 06:07:11,776 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-3
+2026-10-25 06:07:11,875 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-4
+2026-10-25 06:07:11,975 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-5
+2026-10-25 06:07:12,075 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-6
+2026-10-25 06:07:12,175 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-7
+2026-10-25 06:07:12,275 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-8
+2026-10-25 06:07:12,374 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-9
+2026-10-25 06:07:12,474 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-10
+2026-10-25 06:07:12,575 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-11
+2026-10-25 06:07:12,675 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-12
+2026-10-25 06:07:12,774 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-13
+2026-10-25 06:07:12,875 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-14
+2026-10-25 06:07:12,974 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-15
+2026-10-25 06:07:13,075 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-16
+2026-10-25 06:07:13,175 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-17
+2026-10-25 06:07:13,275 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-18
+2026-10-25 06:07:13,374 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-19
+2026-10-25 06:07:13,474 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-20
+2026-10-25 06:07:13,575 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-21
+2026-10-25 06:07:13,675 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-22
+2026-10-25 06:07:13,774 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-23
+2026-10-25 06:07:13,874 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-24
+2026-10-25 06:07:13,974 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-25
+2026-10-25 06:07:14,074 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-26
+2026-10-25 06:07:14,175 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-27
+2026-10-25 06:07:14,276 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-28
+2026-10-25 06:07:14,375 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-29
+2026-10-25 06:07:14,474 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-30
+2026-10-25 06:07:14,575 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-31
+2026-10-25 06:07:14,674 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-32
+2026-10-25 06:07:14,774 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-33
+2026-10-25 06:07:14,874 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-34
+2026-10-25 06:07:14,974 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-35
+2026-10-25 06:07:15,075 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-36
+2026-10-25 06:07:15,175 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-37
+2026-10-25 06:07:15,274 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-38
+2026-10-25 06:07:15,374 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-39
+2026-10-25 06:07:15,475 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-40
+2026-10-25 06:07:15,575 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-41
+2026-10-25 06:07:15,674 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-42
+2026-10-25 06:07:15,775 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-43
+2026-10-25 06:07:15,875 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-44
+2026-10-25 06:07:15,974 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-45
+2026-10-25 06:07:16,074 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-46
+2026-10-25 06:07:16,175 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-47
+2026-10-25 06:07:16,274 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-48
+2026-10-25 06:07:16,375 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-49
+2026-10-25 06:07:16,475 INFO o.a.j.t.JMeterThread: Thread started: 详情接口梯度压测 1-50
+2026-10-25 06:07:30,001 INFO o.a.j.r.Summariser: summary +  46169 in 00:00:18 = 2497.5/s Avg:    17 Min:     1 Max:    43 Err:     0 (0.00%) Active: 50 Started: 50 Finished: 0
+2026-10-25 06:08:00,001 INFO o.a.j.r.Summariser: summary +  70622 in 00:00:30 = 2354.1/s Avg:    21 Min:    14 Max:    52 Err:     0 (0.00%) Active: 50 Started: 50 Finished: 0
+2026-10-25 06:08:00,001 INFO o.a.j.r.Summariser: summary = 116791 in 00:00:48 = 2408.8/s Avg:    19 Min:     1 Max:    52 Err:     0 (0.00%)
+2026-10-25 06:08:11,578 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-3
+2026-10-25 06:08:11,578 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-3
+2026-10-25 06:08:11,579 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-6
+2026-10-25 06:08:11,579 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-6
+2026-10-25 06:08:11,580 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-8
+2026-10-25 06:08:11,580 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-8
+2026-10-25 06:08:11,582 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-17
+2026-10-25 06:08:11,582 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-17
+2026-10-25 06:08:11,583 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-11
+2026-10-25 06:08:11,583 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-11
+2026-10-25 06:08:11,584 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-19
+2026-10-25 06:08:11,584 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-4
+2026-10-25 06:08:11,585 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-4
+2026-10-25 06:08:11,585 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-19
+2026-10-25 06:08:11,586 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-16
+2026-10-25 06:08:11,586 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-16
+2026-10-25 06:08:11,588 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-34
+2026-10-25 06:08:11,588 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-27
+2026-10-25 06:08:11,588 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-27
+2026-10-25 06:08:11,588 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-13
+2026-10-25 06:08:11,588 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-34
+2026-10-25 06:08:11,588 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-13
+2026-10-25 06:08:11,589 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-30
+2026-10-25 06:08:11,589 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-38
+2026-10-25 06:08:11,589 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-30
+2026-10-25 06:08:11,589 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-38
+2026-10-25 06:08:11,590 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-1
+2026-10-25 06:08:11,590 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-20
+2026-10-25 06:08:11,590 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-29
+2026-10-25 06:08:11,590 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-1
+2026-10-25 06:08:11,590 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-20
+2026-10-25 06:08:11,590 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-29
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-33
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-2
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-24
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-32
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-22
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-2
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-39
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-33
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-24
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-22
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-39
+2026-10-25 06:08:11,593 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-32
+2026-10-25 06:08:11,594 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-18
+2026-10-25 06:08:11,594 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-14
+2026-10-25 06:08:11,594 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-37
+2026-10-25 06:08:11,594 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-18
+2026-10-25 06:08:11,594 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-37
+2026-10-25 06:08:11,594 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-14
+2026-10-25 06:08:11,597 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-41
+2026-10-25 06:08:11,597 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-7
+2026-10-25 06:08:11,597 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-48
+2026-10-25 06:08:11,597 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-5
+2026-10-25 06:08:11,597 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-7
+2026-10-25 06:08:11,597 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-41
+2026-10-25 06:08:11,597 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-48
+2026-10-25 06:08:11,597 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-5
+2026-10-25 06:08:11,599 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-10
+2026-10-25 06:08:11,599 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-9
+2026-10-25 06:08:11,599 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-43
+2026-10-25 06:08:11,599 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-47
+2026-10-25 06:08:11,599 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-9
+2026-10-25 06:08:11,599 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-10
+2026-10-25 06:08:11,599 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-43
+2026-10-25 06:08:11,599 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-47
+2026-10-25 06:08:11,601 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-26
+2026-10-25 06:08:11,601 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-50
+2026-10-25 06:08:11,601 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-35
+2026-10-25 06:08:11,601 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-23
+2026-10-25 06:08:11,601 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-42
+2026-10-25 06:08:11,601 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-26
+2026-10-25 06:08:11,601 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-35
+2026-10-25 06:08:11,601 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-50
+2026-10-25 06:08:11,601 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-23
+2026-10-25 06:08:11,601 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-42
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-46
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-25
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-15
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-49
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-21
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-46
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-12
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-49
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-25
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-15
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-21
+2026-10-25 06:08:11,602 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-12
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-36
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-31
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-36
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-28
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-45
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-28
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-45
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-44
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Stopping because end time detected by thread: 详情接口梯度压测 1-40
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-31
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-40
+2026-10-25 06:08:11,603 INFO o.a.j.t.JMeterThread: Thread finished: 详情接口梯度压测 1-44
+2026-10-25 06:08:11,604 INFO o.a.j.e.StandardJMeterEngine: Notifying test listeners of end of test
+2026-10-25 06:08:11,605 INFO o.a.j.r.Summariser: summary +  25861 in 00:00:12 = 2228.6/s Avg:    22 Min:    15 Max:    57 Err:     0 (0.00%) Active: 0 Started: 50 Finished: 50
+2026-10-25 06:08:11,605 INFO o.a.j.r.Summariser: summary = 142652 in 00:01:00 = 2373.9/s Avg:    20 Min:     1 Max:    57 Err:     0 (0.00%)
