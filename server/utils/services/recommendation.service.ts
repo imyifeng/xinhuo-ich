@@ -352,7 +352,7 @@ function buildRecommendationRows(
         .slice(0, RECOMMENDATION_ITEM_LIMIT)
         .forEach(({ itemId, heat }) =>
           rows.push({ userId, craftItemId: itemId, courseId: null, score: heat, reason: FALLBACK_REASON, generatedAt: now }))
-      appendTopCourses(rows, userId, catalog, globalCourseLearners, new Set(learner.activeCourseIds), FALLBACK_REASON, now)
+      appendTopCourses(rows, userId, catalog, globalCourseLearners, globalCourseLearners, learner.activeCourseIds, FALLBACK_REASON, now)
       continue
     }
 
@@ -396,30 +396,47 @@ function buildRecommendationRows(
       .forEach(([itemId, { score, reason }]) =>
         rows.push({ userId, craftItemId: itemId, courseId: null, score, reason, generatedAt: now }))
 
-    // ---- 课程候选：同簇学习人数排序，排除在学课程；簇内无热度则退全站 ----
-    const courseHeatSource = maxCount(clusterCourseLearners.get(clusterIndex)!) > 0
-      ? clusterCourseLearners.get(clusterIndex)!
-      : globalCourseLearners
-    appendTopCourses(rows, userId, catalog, courseHeatSource, learner.activeCourseIds, CLUSTER_COURSE_REASON, now)
+    // ---- 课程候选：同簇学习人数排序，排除在学课程 ----
+    // 口径与条目一致：某课程簇内无热度（同好还没人学）时退全站热度，保证推荐位不至于空缺
+    appendTopCourses(
+      rows,
+      userId,
+      catalog,
+      clusterCourseLearners.get(clusterIndex)!,
+      globalCourseLearners,
+      learner.activeCourseIds,
+      CLUSTER_COURSE_REASON,
+      now,
+    )
   }
 
   return rows
 }
 
-/** 按热度取前 N 门课程（排除在学；热度 = 相应人群内开始该课程的人数） */
+/**
+ * 按热度取前 N 门课程（排除在学）：
+ * 课程热度 = 簇内学习人数归一化；簇内该课程无人学时退全站归一化热度（cluster 与 global 传同一 Map 即纯全站口径）。
+ */
 function appendTopCourses(
   rows: RecommendationRow[],
   userId: number,
   catalog: ContentCatalog,
-  courseLearners: Map<string, number>,
+  clusterCourseLearners: Map<string, number>,
+  globalCourseLearners: Map<string, number>,
   excludeCourseIds: Set<string>,
   reason: string,
   now: Date,
 ): void {
-  const max = maxCount(courseLearners)
+  const maxCluster = maxCount(clusterCourseLearners)
+  const maxGlobal = maxCount(globalCourseLearners)
+  const heatOf = (courseId: string): number => {
+    const clusterCount = clusterCourseLearners.get(courseId) ?? 0
+    if (clusterCount > 0) return clusterCount / (maxCluster || 1)
+    return (globalCourseLearners.get(courseId) ?? 0) / (maxGlobal || 1)
+  }
   catalog.spec.courses
     .filter(course => course.totalSteps > 0 && !excludeCourseIds.has(course.id))
-    .map(course => ({ id: course.id, heat: (courseLearners.get(course.id) ?? 0) / (max || 1) }))
+    .map(course => ({ id: course.id, heat: heatOf(course.id) }))
     .filter(course => course.heat > 0)
     .sort((a, b) => b.heat - a.heat || (a.id < b.id ? -1 : 1))
     .slice(0, RECOMMENDATION_COURSE_LIMIT)
