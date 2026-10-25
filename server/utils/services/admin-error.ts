@@ -1,8 +1,6 @@
 /**
- * 管理端业务层的统一业务错误（工单 #5）：
- * 携带语义化 HTTP 状态码（400 参数非法 / 404 不存在 / 409 唯一约束冲突），
- * 由 server/utils/admin.ts 的 defineAdminHandler 统一映射为 { error } 响应体。
- * 模式与 auth.service 的 AuthError 一致：业务层不触碰 h3。
+ * 管理端业务错误与 Prisma 约束错误判别（工单 #5）。
+ * AdminError 携带语义化 HTTP 状态码，由 server/utils/admin.ts 统一映射为响应。
  */
 export class AdminError extends Error {
   constructor(
@@ -11,4 +9,18 @@ export class AdminError extends Error {
   ) {
     super(message)
   }
+}
+
+/** Prisma 唯一约束冲突（P2002） */
+export function isUniqueViolation(error: unknown): boolean {
+  return hasPrismaCode(error, 'P2002')
+}
+
+/** Prisma 目标记录不存在（P2025，update/delete 落空） */
+export function isRecordNotFound(error: unknown): boolean {
+  return hasPrismaCode(error, 'P2025')
+}
+
+function hasPrismaCode(error: unknown, code: string): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === code
 }
