@@ -47,7 +47,8 @@ enum BehaviorEventType {
   CREATE_COMMENT
 }
 
-/// 账号 —— 学习者、传承人与管理员的登录主体（自实现认证：argon2 哈希 + Redis 会话）
+/// 账号 —— 覆盖学习者/传承人/管理员三角色的账号实体（自实现认证：argon2 哈希 + Redis 会话）；
+/// 术语上「学习者」指 LEARNER 角色用户（传承人另有展示人物实体 Inheritor，见 GLOSSARY）
 model User {
   id          Int      @id @default(autoincrement())
   /// 登录用户名，全局唯一（3~30 字符）
