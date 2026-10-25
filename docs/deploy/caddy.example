@@ -1,0 +1,23 @@
+# 宿主机 Caddy 反向代理配置示例（工单 #10）
+#
+# 用法：把下方站点块并入服务器上既有 Caddyfile（通常 /etc/caddy/Caddyfile），
+# 域名换成你的真实域名，端口与 .env 的 APP_PORT 一致，然后 `systemctl reload caddy`。
+# Caddy 会自动签发并续期 Let's Encrypt 证书，无需额外配置。
+#
+# 前提：compose 已在宿主机上把应用暴露到 127.0.0.1:${APP_PORT}（默认 3000）。
+
+xinhuo.example.com {
+	# 压缩（Caddy 支持 zstd/gzip 自适应）
+	encode zstd gzip
+
+	# 反代到本机应用端口；若 .env 设了 APP_PORT=3005，这里改 127.0.0.1:3005
+	reverse_proxy 127.0.0.1:3000 {
+		# 透传真实客户端信息（应用日志与安全头部依赖）
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	# 静态资源（构建产物内 hash 文件名）可放心缓存；defer 确保覆盖上游响应头
+	@static path /_nuxt/*
+	header @static Cache-Control "public, max-age=31536000, immutable" defer
+}

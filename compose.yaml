@@ -1,13 +1,22 @@
 # 生产形态：app（多阶段构建镜像）+ postgres + redis —— 见 ADR 0002
 # 反向代理不在 compose 内：由宿主机既有 Caddy 指向 ${APP_PORT}
 # 用法：docker compose up -d --build
+# 演示数据（可选，一次性任务）：docker compose run --rm seed
 name: xinhuo-prod
+
+# 容器日志轮转：防止长期运行把宿主机磁盘写满
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
 
 services:
   app:
     build: .
     image: xinhuo-ich:latest
     restart: unless-stopped
+    logging: *default-logging
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-xinhuo}:${POSTGRES_PASSWORD:-xinhuo}@postgres:5432/${POSTGRES_DB:-xinhuo}
       REDIS_URL: redis://redis:6379
@@ -30,6 +39,7 @@ services:
   postgres:
     image: postgres:18.2-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-xinhuo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-xinhuo}
@@ -45,6 +55,9 @@ services:
   redis:
     image: redis:8.4-alpine
     restart: unless-stopped
+    logging: *default-logging
+    # AOF 持久化：会话存 Redis，重启不掉登录态
+    command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
     healthcheck:
@@ -52,6 +65,22 @@ services:
       interval: 5s
       timeout: 3s
       retries: 12
+
+  # 一次性演示数据任务（不随 up 启动，仅演示部署需要）：
+  # 复用多阶段构建的 build 层（与应用镜像共享缓存，不额外占构建时间），
+  # 内容种子 + 演示学习者 + 合成行为事件 + 画像重建，见 prisma/demo-seed.ts
+  seed:
+    build:
+      context: .
+      target: build
+    profiles: ["tools"]
+    restart: "no"
+    command: ["pnpm", "demo:seed"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-xinhuo}:${POSTGRES_PASSWORD:-xinhuo}@postgres:5432/${POSTGRES_DB:-xinhuo}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
