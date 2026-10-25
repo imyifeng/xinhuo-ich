@@ -1,7 +1,8 @@
 // 薪火数据模型 —— 术语以根目录 GLOSSARY.md 为准
 // T2 新增 user（认证竖切）；T3 新增技艺条目展示竖切（CraftItem 完整展示字段 / Inheritor / Tag / BehaviorEvent）；
 // T5 新增课程与学习进度竖切（Course / Step / LearningRecord）；
-// T6 新增交流区竖切（Post / Comment）。
+// T6 新增交流区竖切（Post / Comment）；
+// T7 新增画像与推荐竖切（LearnerProfile / Recommendation）。
 
 generator client {
   provider = "prisma-client"
@@ -65,6 +66,9 @@ model User {
   learningRecords LearningRecord[]
   posts Post[]
   comments Comment[]
+  /// 学习者画像（离线聚类结果，工单 #8）；未跑过管道的学习者无画像
+  profile LearnerProfile?
+  recommendations Recommendation[]
 
   @@map("user")
 }
@@ -266,4 +270,44 @@ model Comment {
   @@index([postId, status])
   @@index([authorId])
   @@map("comment")
+}
+
+/// 学习者画像（工单 #8）—— 离线 K-Means 聚类的结果落库，每位学习者至多一行（userId 即主键，整批重建）。
+/// 术语见 GLOSSARY：学习者画像；命名规则：簇内子类别浏览占比最高者 → "XX爱好者型"，无法命名退"综合浏览型"。
+model LearnerProfile {
+  userId Int @id @map("user_id")
+  /// 可读画像标签（如"陶瓷爱好者型"）
+  clusterLabel String @map("cluster_label")
+  /// 簇编号（K-Means 输出）：标签可能同名（两簇同以陶瓷为主），簇编号必不同，管理端按它统计分布
+  clusterIndex Int @map("cluster_index")
+  /// 自描述特征向量 JSON：{ dimensions: string[], values: number[] }，
+  /// 维度名随向量落库，管理端特征均值表无需回溯当时的条目/课程清单
+  featureVector Json @map("feature_vector")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([clusterIndex])
+  @@map("learner_profile")
+}
+
+/// 个性化推荐（工单 #8）—— 离线管道写给每位学习者的推荐结果（先清后写，整批重建）。
+/// 术语见 GLOSSARY：个性化推荐；条目与课程各占一行，二选一（另一列为空）。
+model Recommendation {
+  id String @id @default(cuid())
+  userId Int @map("user_id")
+  /// 推荐的技艺条目 ID（多态不设外键，与 behavior_event 同法；读取时联表过滤已下架条目）
+  craftItemId String? @map("craft_item_id")
+  /// 推荐的课程 ID（与 craftItemId 二选一）
+  courseId String? @map("course_id")
+  /// 推荐分（0~1）：簇内热度为簇内归一化浏览/学习次数，相似度为标签 TF-IDF 余弦相似度
+  score Float
+  /// 汉字短理由（如"同好都在学"/"内容与你看过《X》相似"/"全站热门"），前台直接展示
+  reason String
+  generatedAt DateTime @map("generated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, score])
+  @@map("recommendation")
 }

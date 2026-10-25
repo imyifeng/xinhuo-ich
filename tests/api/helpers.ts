@@ -34,12 +34,19 @@ export async function attachTags(prisma: PrismaClient, craftItemId: string, tagN
 /** 清空条目相关表（级联含传承人/条目标签）与课程相关表 */
 export async function resetCraftItemTables(prisma: PrismaClient) {
   await resetCourseTables(prisma)
+  await resetProfileTables(prisma)
   await prisma.behaviorEvent.deleteMany()
   await prisma.user.deleteMany()
   await prisma.craftItemTag.deleteMany()
   await prisma.tag.deleteMany()
   await prisma.inheritor.deleteMany()
   await prisma.craftItem.deleteMany()
+}
+
+/** 清空画像与推荐表（工单 #8）：须在清用户表之前调用以解除引用 */
+export async function resetProfileTables(prisma: PrismaClient) {
+  await prisma.recommendation.deleteMany()
+  await prisma.learnerProfile.deleteMany()
 }
 
 /** 清空课程相关表（学习记录/步骤/课程） */
