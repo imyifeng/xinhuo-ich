@@ -1,0 +1,127 @@
+---
+title: 薪火平台数据库 ER 图（由 prisma/schema.prisma 生成）
+---
+erDiagram
+    user {
+        integer id PK "自增主键"
+        text username UK "登录用户名，全局唯一（3~30 字符）"
+        text display_name "对外展示的昵称"
+        text password_hash "argon2 哈希，永不出库（见规格 #1 Implementation Decisions）"
+        role_enum role "平台角色：学习者 / 传承人 / 管理员"
+        datetime created_at "注册时间"
+    }
+    craft_item {
+        text id PK "cuid 字符串主键（对外暴露的条目 ID）"
+        text name UK "条目名称，全局唯一"
+        text subcategory "子类别（陶瓷、织绣、漆器、造纸印刷、金属加工、酿造等）"
+        text batch "列入国家级名录的批次（如“第一批（2006 年）”）"
+        text code "国家级名录编号（如“Ⅷ-1”）"
+        text region "申报地区"
+        text history "历史渊源"
+        text features "工艺特色"
+        jsonb images "图集：{url, credit} 数组，credit 标注图片出处与许可"
+        text video_url "视频外链（B 站），可空"
+        craftitemstatus_enum status "发布状态：仅 PUBLISHED 对游客可见"
+        datetime created_at "创建时间"
+        datetime updated_at "更新时间（@updatedAt 自动维护）"
+    }
+    inheritor {
+        text id PK "cuid 字符串主键"
+        text name "传承人姓名"
+        text bio "人物简介"
+        text level "代表性传承人级别（国家级/省级等）"
+        text craft_item_id FK "所属技艺条目（外键，级联删除）"
+    }
+    tag {
+        text id PK "cuid 字符串主键"
+        text name UK "标签名，全局唯一"
+    }
+    craft_item_tag {
+        text craft_item_id PK,FK "条目 ID（联合主键之一，外键级联删除）"
+        text tag_id PK,FK "标签 ID（联合主键之一，外键级联删除）"
+    }
+    behavior_event {
+        text id PK "cuid 字符串主键"
+        integer user_id FK "触发者；游客不产生事件，理论非空，保留可空以容错脏数据"
+        behavioreventtype_enum type "事件类型（五类，见枚举 BehaviorEventType）"
+        text target_type "目标类型（如 CRAFT_ITEM / COURSE / POST / COMMENT）"
+        text target_id "目标 ID（多态，不设数据库外键）"
+        datetime created_at "发生时间"
+    }
+    course {
+        text id PK "cuid 字符串主键"
+        text title "课程标题"
+        text intro "课程简介"
+        text craft_item_id FK "挂载的技艺条目"
+        integer author_id FK "作者（传承人账号，管理员代建时为其本人）"
+        coursestatus_enum status "发布状态：DRAFT → PENDING_REVIEW → PUBLISHED / REJECTED（工单 #6）"
+        text reject_reason "驳回理由（管理员驳回时可附，传承人可见；重新提交时清空）"
+        datetime created_at "创建时间"
+        datetime updated_at "更新时间（@updatedAt 自动维护）"
+    }
+    step {
+        text id PK "cuid 字符串主键"
+        text course_id FK "所属课程（外键，级联删除）"
+        integer order "同课程内从 1 递增的排序（唯一约束保证不重不漏）"
+        text title "步骤标题"
+        text content "图文内容"
+        text image_url "可选配图地址"
+    }
+    learning_record {
+        integer user_id PK,FK "学习者（联合主键之一，外键级联删除）"
+        text step_id PK,FK "已完成步骤（联合主键之一，外键级联删除）"
+        datetime completed_at "完成时间"
+    }
+    post {
+        text id PK "cuid 字符串主键"
+        integer author_id FK "发帖作者（外键，级联删除）"
+        text title "标题（1~80 字符）"
+        text content "正文"
+        contentstatus_enum status "管理员下架即 HIDDEN，前台与列表一律不可见"
+        datetime created_at "发布时间（列表按其倒序）"
+    }
+    comment {
+        text id PK "cuid 字符串主键"
+        text post_id FK "所属帖子（外键，级联删除）"
+        integer author_id FK "评论作者（外键，级联删除）"
+        text content "正文"
+        contentstatus_enum status "管理员下架即 HIDDEN，详情页与评论数均不计"
+        datetime created_at "评论时间"
+    }
+    learner_profile {
+        integer user_id PK,FK "学习者（主键，外键级联删除；一人至多一份画像）"
+        text cluster_label "可读画像标签（如'陶瓷爱好者型'）"
+        integer cluster_index "簇编号（K-Means 输出）：标签可能同名（两簇同以陶瓷为主），簇编号必不同，管理端按它统计分布"
+        jsonb feature_vector "自描述特征向量 JSON：{ dimensions: string[], values: number[] }"
+        datetime updated_at "重建时间（@updatedAt 自动维护）"
+    }
+    recommendation {
+        text id PK "cuid 字符串主键"
+        integer user_id FK "推荐归属的学习者（外键，级联删除）"
+        text craft_item_id "推荐的技艺条目 ID（多态不设外键，与 behavior_event 同法；读取时联表过滤已下架条目）"
+        text course_id "推荐的课程 ID（与 craftItemId 二选一）"
+        float score "推荐分（0~1）：簇内热度为簇内归一化浏览/学习次数，相似度为标签 TF-IDF 余弦相似度"
+        text reason "汉字短理由（如'同好都在学'/'内容与你看过《X》相似'/'全站热门'），前台直接展示"
+        datetime generated_at "管道生成时间"
+    }
+    craft_item ||--o{ inheritor : "craft_item_id"
+    craft_item ||--o{ craft_item_tag : "craft_item_id"
+    tag ||--o{ craft_item_tag : "tag_id"
+    user |o--o{ behavior_event : "user_id"
+    craft_item ||--o{ course : "craft_item_id"
+    user ||--o{ course : "author_id"
+    course ||--o{ step : "course_id"
+    user ||--o{ learning_record : "user_id"
+    step ||--o{ learning_record : "step_id"
+    user ||--o{ post : "author_id"
+    post ||--o{ comment : "post_id"
+    user ||--o{ comment : "author_id"
+    user ||--o| learner_profile : "user_id"
+    user ||--o{ recommendation : "user_id"
+    %% 多态目标引用：不设数据库外键，读取时联表过滤（术语见 GLOSSARY「多态目标」）
+    craft_item |o..o{ behavior_event : "target_type=CRAFT_ITEM（无外键）"
+    course |o..o{ behavior_event : "target_type=COURSE（无外键）"
+    post |o..o{ behavior_event : "target_type=POST（无外键）"
+    comment |o..o{ behavior_event : "target_type=COMMENT（无外键）"
+    craft_item |o..o{ recommendation : "craft_item_id（无外键，与 course_id 二选一）"
+    course |o..o{ recommendation : "course_id（无外键，与 craft_item_id 二选一）"
