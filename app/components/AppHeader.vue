@@ -41,12 +41,12 @@ async function onLogout() {
       </NuxtLink>
 
       <nav class="flex items-center gap-3 text-sm text-stone-500">
-        <!-- 技艺条目（T3 已实现）；课程（T5 已实现）；交流区 由后续工单实现 -->
+        <!-- 技艺条目（T3 已实现）；课程（T5 已实现）；交流区（T6 已实现） -->
         <NuxtLink to="/craft-items" class="hidden transition hover:text-orange-600 sm:inline">技艺条目</NuxtLink>
         <span class="hidden text-stone-300 sm:inline">·</span>
         <NuxtLink to="/courses" class="hidden transition hover:text-orange-600 sm:inline">课程</NuxtLink>
         <span class="hidden text-stone-300 sm:inline">·</span>
-        <span class="hidden sm:inline">交流区</span>
+        <NuxtLink to="/community" class="hidden transition hover:text-orange-600 sm:inline">交流区</NuxtLink>
 
         <!-- auth-area -->
         <span class="mx-1 h-4 w-px bg-stone-200" aria-hidden="true" />

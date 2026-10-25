@@ -36,7 +36,16 @@ pnpm db:seed      # 写入演示用技艺条目、5 门已发布课程与演示�
 pnpm dev          # http://localhost:3000
 ```
 
-打开 http://localhost:3000：首页展示品牌与来自数据库的实时统计（技艺条目数 / 覆盖子类别数）；`GET /api/health` 返回数据库与 Redis 连通状态及详情缓存统计（命中/未命中计数）。技艺条目详情接口带 cache-aside 缓存（`X-Cache: HIT | MISS | BYPASS` 响应头），实现见 `server/utils/services/cache.service.ts`。管理后台在 http://localhost:3000/admin（需用演示管理员或被标记为管理员角色的账号登录），后台写路径已接线 `invalidateCraftItem` 失效详情缓存。
+打开 http://localhost:3000：首页展示品牌与来自数据库的实时统计（技艺条目数 / 覆盖子类别数）；`GET /api/health` 返回数据库与 Redis 连通状态及详情缓存统计（命中/未命中计数）。技艺条目详情接口带 cache-aside 缓存（`X-Cache: HIT | MISS | BYPASS` 响应头），实现见 `server/utils/services/cache.service.ts`。交流区在 http://localhost:3000/community（帖子列表与详情公开可看，发帖/评论需登录）。管理后台在 http://localhost:3000/admin（需用演示管理员或被标记为管理员角色的账号登录），后台写路径已接线 `invalidateCraftItem` 失效详情缓存，内容审核（帖子/评论下架与恢复）见「内容审核」页。
+
+### 演示账号（种子写入，仅用于开发/演示）
+
+| 账号 | 密码 | 角色 | 用途 |
+| --- | --- | --- | --- |
+| `admin` | `admin12345` | 管理员 | 管理后台 /admin（内容审核等） |
+| `taotao` | `taotao123456` | 学习者 | 交流区演示帖子作者（制瓷心得） |
+| `shanshan` | `shanshan123456` | 学习者 | 交流区演示帖子作者（织绣心得） |
+| `muzi` | `muzi123456` | 学习者 | 交流区演示帖子作者（造纸心得） |
 
 ### 演示账号（仅开发/演示，种子幂等 upsert）
 

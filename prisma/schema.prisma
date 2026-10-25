@@ -1,6 +1,7 @@
 // 薪火数据模型 —— 术语以根目录 GLOSSARY.md 为准
-// T2 新增 user（认证竖切）；T3 新增技艺条目展示竖切（CraftItem 完整展示字段 / Inheritor / Tag / BehaviorEvent）。
-// T5 新增课程与学习进度竖切（Course / Step / LearningRecord）。
+// T2 新增 user（认证竖切）；T3 新增技艺条目展示竖切（CraftItem 完整展示字段 / Inheritor / Tag / BehaviorEvent）；
+// T5 新增课程与学习进度竖切（Course / Step / LearningRecord）；
+// T6 新增交流区竖切（Post / Comment）。
 
 generator client {
   provider = "prisma-client"
@@ -23,6 +24,12 @@ enum Role {
 enum CraftItemStatus {
   DRAFT
   PUBLISHED
+}
+
+/// 交流区内容状态（帖子/评论共用）：管理员下架即 HIDDEN，恢复回 VISIBLE
+enum ContentStatus {
+  VISIBLE
+  HIDDEN
 }
 
 /// 学习行为事件类型（规格 #1 用户故事 27 的五类，仅登录用户记录）
@@ -56,6 +63,8 @@ model User {
   courses Course[]
   /// 学习进度记录（已完成步骤）
   learningRecords LearningRecord[]
+  posts Post[]
+  comments Comment[]
 
   @@map("user")
 }
@@ -159,8 +168,7 @@ model BehaviorEvent {
   @@map("behavior_event")
 }
 
-/// 课程 —— 某个技艺条目下的结构化图文教程，由传承人（或管理员）账号创建并维护（工单 #6）
-model Course {
+/// 课程 —— 某个技艺条目下的结构化图文教程，由传承人（或管理员）账号创建并维护（工单 #6）model Course {
   id String @id @default(cuid())
   /// 课程标题
   title String
@@ -219,4 +227,42 @@ model LearningRecord {
   @@id([userId, stepId])
   @@index([stepId])
   @@map("learning_record")
+}
+
+/// 帖子 —— 学习者在交流区发布的主题讨论（术语见 GLOSSARY：帖子）
+model Post {
+  id String @id @default(cuid())
+  authorId Int @map("author_id")
+  /// 标题（1~80 字符）
+  title String @map("title")
+  /// 正文
+  content String @map("content")
+  /// 管理员下架即 HIDDEN，前台与列表一律不可见
+  status ContentStatus @default(VISIBLE)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[]
+
+  @@index([status, createdAt])
+  @@map("post")
+}
+
+/// 评论 —— 对帖子的回复；课程不设评论，课程讨论引流到交流区（术语见 GLOSSARY：评论）
+model Comment {
+  id String @id @default(cuid())
+  postId String @map("post_id")
+  authorId Int @map("author_id")
+  /// 正文
+  content String @map("content")
+  /// 管理员下架即 HIDDEN，详情页与评论数均不计
+  status ContentStatus @default(VISIBLE)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, status])
+  @@index([authorId])
+  @@map("comment")
 }
