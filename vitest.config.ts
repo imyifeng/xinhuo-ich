@@ -8,5 +8,7 @@ export default defineConfig({
     globalSetup: ['./tests/global-setup.ts'],
     hookTimeout: 240_000,
     testTimeout: 30_000,
+    // 各测试文件共用同一个测试库并会清空夹具表，必须串行执行避免相互干扰
+    fileParallelism: false,
   },
 })
